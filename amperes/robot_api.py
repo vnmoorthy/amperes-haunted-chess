@@ -322,8 +322,8 @@ class ChessRunner:
 class ChessNewReq(BaseModel):
     model_config = ConfigDict(extra="forbid")
     color: str = Field("black", pattern="^(white|black|both)$")  # both: the arm plays every move (engine vs engine)
-    skill: int = Field(5, ge=0, le=20)
-    think_s: float = Field(0.5, ge=0.05, le=10)
+    skill: int = Field(20, ge=0, le=20)
+    think_s: float = Field(1.5, ge=0.05, le=10)
     settle_s: float = Field(0.4, ge=0, le=3)
     execute: bool = False
     ack: str = ""
