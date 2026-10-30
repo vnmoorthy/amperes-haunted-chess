@@ -179,12 +179,15 @@ class ChessRunner:
                         await asyncio.sleep(2)
                         self.queue.put_nowait("watch")
                     elif seen is None:
-                        self.state["phase"] = "your move"  # not seen within the timeout: type it, or press Robot moves after fixing the board
+                        # a move typed in the console ends the watch, and its reply is already queued; otherwise the move was
+                        # not seen within the timeout: type it, or press Robot moves after fixing the board
+                        if self.game.board.turn != self.game.robot_color:
+                            self.state["phase"] = "your move"
                     else:
                         if self.voice and self.game.history:
                             from amperes.integrations import chess_voice as V
 
-                            V.announce("human_move", self.game.history[-1].get("san", ""), self.game.board.fen(), "The human")
+                            V.announce("move", self.game.history[-1].get("san", ""), self.game.board.fen())
                         if self._game_over():
                             self.state["phase"] = "game over"
                             self._on_game_over()
@@ -216,7 +219,7 @@ class ChessRunner:
         if self.voice:
             from amperes.integrations import chess_voice as V
 
-            V.announce("game_over", use_claude=False)
+            V.announce("game_over", verdict=self.state.get("verdict"))
         if self.auto_reset and self.game.world is not None and self.spec.auto:
             self.queue.put_nowait("reset")
 
@@ -241,7 +244,7 @@ class ChessRunner:
         if self.voice:
             from amperes.integrations import chess_voice as V
 
-            V.announce("reset", use_claude=False)
+            V.announce("reset")
         for i, op in enumerate(plan.ops):
             if self.stop_event.is_set():
                 self.state["phase"] = "stopped"
@@ -275,7 +278,7 @@ class ChessRunner:
         if self.voice:
             from amperes.integrations import chess_voice as V
 
-            V.announce("reset_done", use_claude=False)
+            V.announce("reset_done")
 
     def _log(self, msg):
         self.state["last_log"] = str(msg)
@@ -481,14 +484,20 @@ def chess_human(req: ChessMoveReq):
     if r.state.get("phase") not in ("your move", "robot to move", "watching for your move") or r.game.board.turn == r.game.robot_color:
         raise HTTPException(409, f"not your move (phase: {r.state.get('phase')})")
     try:
-        mv = r.game.human_move(req.move)
+        mv = r.game.human_move(req.move)  # a camera watch in progress sees the new ply and ends
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    if not r.game.board.is_game_over():
+    if r.voice:
+        from amperes.integrations import chess_voice as V
+
+        V.announce("move", r.game.history[-1]["san"], r.game.board.fen())
+    if not r._game_over():
         r.state["phase"] = "robot to move"
         r.enqueue("robot_move")
     else:
         r.state["phase"] = "game over"
+        if r.loop is not None:
+            r.loop.call_soon_threadsafe(r._on_game_over)
     return {"accepted": mv.uci(), **r.status()}
 
 

@@ -650,12 +650,6 @@ class ChessSession:
         self._pending_move, self._pending_ops = mv, ops
         fen_before = self.game.board.fen()
         self.log(f"robot plays {self.game.board.san(mv)} ({mv.uci()}): " + "; ".join(f"{o.kind} {o.symbol} {o.src}->{o.dst}" for o in ops))
-        if getattr(self, "voice", False) and not _retry:
-            from amperes.integrations import chess_voice as V
-
-            san, after = self.game.board.san(mv), self.game.board.copy()
-            after.push(mv)
-            V.announce(V.event_for(san), san, after.fen(), "The robot")  # spoken while the arm moves
         rec: dict[str, Any] = {"uci": mv.uci(), "san": self.game.board.san(mv), "fen_before": fen_before, "ops": [asdict(o) for o in ops],
                                "t": time.time(), "trials": [], "images_before": [], "images_after": []}
         recent_watch = time.time() - (self.session.get("last_watch") or {}).get("t", 0) < 180
@@ -758,6 +752,10 @@ class ChessSession:
         self.game.commit_robot_move(mv, ops, results)  # the game state follows the engine; an unfixed failure is corrected by hand
         rec["fen_after"] = self.game.board.fen()
         self.session["moves"].append(rec)
+        if getattr(self, "voice", False):
+            from amperes.integrations import chess_voice as V
+
+            V.announce("move", rec["san"], rec["fen_after"])  # called once the move is made, never for a move that failed
         if self.live:
             self.live.update(**self.game.status(), last_move=rec, trials=len(self.session["trials"]))
         return rec
@@ -870,15 +868,20 @@ class ChessSession:
         if self.game.robot_color is None or self.game.board.turn == self.game.robot_color:
             raise ValueError("it is the robot's turn")
         t0, last, stable = time.time(), None, 0
+        start_ply = len(self.game.board.move_stack)  # a move typed into the console while watching ends the watch
         await self.look("watch_start", len(self.session["trials"]))
         baseline: set[str] | None = None  # squares the camera already misreads before the human moves: ignore them
         while time.time() - t0 < timeout_s and not self.stop_event.is_set():
+            if len(self.game.board.move_stack) != start_ply:
+                break
             try:
                 obs = await self.observe(save_debug=True)
             except Exception as exc:
                 log(f"observe failed: {type(exc).__name__}: {str(exc)[:80]}")
                 await asyncio.sleep(poll_s)
                 continue
+            if len(self.game.board.move_stack) != start_ply:
+                break
             if baseline is None:
                 baseline = set(CV.mismatches(obs, CV.expected_state(self.game.board)))
                 flicker: dict[str, int] = {}
@@ -901,6 +904,8 @@ class ChessSession:
                 stable = stable + 1 if last == m["best"] else 1
                 last = m["best"]
                 if stable >= 2:
+                    if len(self.game.board.move_stack) != start_ply:
+                        break
                     mv = self.game.human_move(m["best"])
                     log(f"saw your move: {mv.uci()} ({m['visible_squares']} squares visible)")
                     self.session["moves"].append({"by": "human", "uci": mv.uci(), "t": time.time(), "detected": m, "fen_after": self.game.board.fen()})
@@ -908,6 +913,8 @@ class ChessSession:
             else:
                 stable, last = 0, None
             await asyncio.sleep(poll_s)
+        if len(self.game.board.move_stack) != start_ply:
+            log("a move was entered in the console; stopped watching")
         return None
 
     async def close(self):

@@ -132,3 +132,23 @@ def test_chess_session_to_canonical_imports(tmp_path):
     st = store.query("SELECT outcome, quality_status FROM episodes WHERE dataset_id=?", [r["dataset_id"]])[0]
     assert st["outcome"] == "failure" and st["quality_status"] == "valid_failed_task"
     assert (tmp_path / "c" / "moves.jsonl").read_text().count("fen_before") == 1
+
+
+def test_typed_move_ends_the_camera_watch(tmp_path):
+    game = CR.Game(FakeEngine([]), robot_color=chess.WHITE)
+    game.board.push_san("e4")  # the robot has moved: the person's turn
+    s = CR.ChessSession(CR.ChessSpec(out_dir=tmp_path), cal(), game, threading.Event())
+    polls = []
+
+    async def look(*a, **k):
+        return []
+
+    async def observe(**k):
+        polls.append(1)
+        game.human_move("e5")  # typed into the console while the camera is watching
+        return {}
+
+    s.look, s.observe = look, observe
+    s.session.update(trials=[], moves=[])  # filled in by connect() on the real arm
+    assert asyncio.run(s.watch_human_move(timeout_s=5, poll_s=0.01)) is None
+    assert polls == [1] and game.board.turn == chess.WHITE and [h["san"] for h in game.history] == ["e5"]

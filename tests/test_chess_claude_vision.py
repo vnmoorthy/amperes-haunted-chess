@@ -40,10 +40,17 @@ def test_label_squares_draws_without_changing_size():
 
 
 def test_voice_phrasing_and_disabled(monkeypatch):
-    assert V._spoken("Nxf7+") == "knight takes f7, check"
-    assert V._spoken("exd8=Q#") == "e takes d8 promotes to queen, checkmate"
-    assert V._spoken("O-O") == "castles kingside"
-    assert V.event_for("Qxf7#") == "game_over" and V.event_for("Bxc6") == "capture"
+    assert V._spoken("Nxf7+") == "knight takes F7, check"
+    assert V._spoken("exd8=Q#") == "pawn takes D8, promotes to queen, checkmate"
+    assert V._spoken("Nbd2") == "knight to D2" and V._spoken("e4") == "pawn to E4"
+    assert V._spoken("O-O") == "castles kingside" and V._spoken("O-O-O+") == "castles queenside, check"
+    after_e4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    assert V.move_line("e4", after_e4) == "White pawn to E4."
+    assert V.move_line("Nf6", after_e4.replace(" b ", " w ")) == "Black knight to F6."
+    assert V.move_line("Qh5") == "Queen to H5."
+    assert V.result_line({"result": "1-0", "reason": "checkmate"}) == "Game over: checkmate. White wins."
+    assert V.result_line({"result": "*", "reason": "stopped after 40 plies"}) == "Game over: stopped after 40 plies."
+    assert V.result_line(None) == "Game over."
     monkeypatch.setenv("AMPERES_VOICE", "0")
     assert not V.enabled()
-    V.announce("robot_move", "e4", "", use_claude=False)  # no thread, no sound
+    V.announce("move", "e4", after_e4)  # no thread, no sound
