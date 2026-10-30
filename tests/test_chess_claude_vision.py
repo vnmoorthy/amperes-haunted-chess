@@ -49,7 +49,7 @@ def test_voice_phrasing_and_disabled(monkeypatch):
     assert V.move_line("Nf6", after_e4.replace(" b ", " w ")) == "Black knight to F6."
     assert V.move_line("Qh5") == "Queen to H5."
     assert V.result_line({"result": "1-0", "reason": "checkmate"}) == "Game over: checkmate. White wins."
-    assert V.result_line({"result": "*", "reason": "stopped after 40 plies"}) == "Game over: stopped after 40 plies."
+    assert V.result_line({"result": "*", "reason": "stopped after 40 plies"}) == "Game over: stopped after 40 half-moves."
     assert V.result_line(None) == "Game over."
     monkeypatch.setenv("AMPERES_VOICE", "0")
     assert not V.enabled()

@@ -58,7 +58,7 @@ def move_line(san: str, fen: str = "") -> str:
 def result_line(verdict: dict[str, Any] | None) -> str:
     """'Game over: checkmate. White wins.' from an Adjudicator verdict."""
     v = verdict or {}
-    reason = v.get("reason")
+    reason = (v.get("reason") or "").replace(" plies", " half-moves")
     return " ".join(x for x in (f"Game over: {reason}." if reason else "Game over.", RESULTS.get(v.get("result", ""), "")) if x)
 
 
