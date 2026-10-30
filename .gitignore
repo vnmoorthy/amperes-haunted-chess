@@ -9,3 +9,4 @@ amperes_data/
 .claude/
 .mcp.json
 .DS_Store
+!.env.example
