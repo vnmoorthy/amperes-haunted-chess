@@ -319,7 +319,7 @@ class ChessNewReq(BaseModel):
     fen: str | None = None
     auto: bool = True  # see the human's move through the wrist camera and reply without typed input
     track: bool = True  # know where every piece is (slots beside the board, spare queens) so the board can be reset
-    voice: bool = True  # Halloween commentary through the Mac's speaker
+    voice: bool = True  # call out every move through the Mac's speaker
     auto_reset: bool = False  # when the game ends, put every piece back on its own
     max_plies: int | None = Field(None, ge=2, le=600)  # stop robot-vs-robot games after this many half-moves
 
