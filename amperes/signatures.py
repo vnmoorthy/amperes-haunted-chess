@@ -45,7 +45,7 @@ def signatures(dataset_ids: list[str] | None = None) -> dict[str, dict[str, Any]
     """episode_id → {vector, dataset_id, status, category, evidence}. Episodes with no evidence at all are skipped."""
     where = ("WHERE dataset_id IN (%s)" % ",".join("?" * len(dataset_ids))) if dataset_ids else ""
     params = list(dataset_ids or [])
-    eps = store.query(f"SELECT episode_id, dataset_id, quality_status, category, session_id, workcell_id FROM episodes {where}", params)
+    eps = store.query(f"SELECT episode_id, dataset_id, quality_status, category, reason, session_id, workcell_id FROM episodes {where}", params)
     rules: dict[str, dict[str, float]] = defaultdict(dict)
     for f in store.query(f"SELECT episode_id, rule_id, severity FROM quality_findings {where}", params):
         if f["episode_id"]:
@@ -57,10 +57,12 @@ def signatures(dataset_ids: list[str] | None = None) -> dict[str, dict[str, Any]
     out = {}
     for e in eps:
         eid = e["episode_id"]
-        v = _vec(rules.get(eid, {}), e["quality_status"], evc.get(eid, {}), e["category"])
-        if not any(v[: len(RULE_IDS)]) and not evc.get(eid) and not e["category"]:
+        # robot trials (chess, pick-and-place) record their failure category as the reason
+        cat = e["category"] or (e["reason"] if e["reason"] in CATEGORIES else None)
+        v = _vec(rules.get(eid, {}), e["quality_status"], evc.get(eid, {}), cat)
+        if not any(v[: len(RULE_IDS)]) and not evc.get(eid) and not cat:
             continue  # nothing wrong recorded: not a failure signature
-        out[eid] = {"vector": v, "dataset_id": e["dataset_id"], "status": e["quality_status"], "category": e["category"],
+        out[eid] = {"vector": v, "dataset_id": e["dataset_id"], "status": e["quality_status"], "category": cat,
                     "session_id": e["session_id"], "workcell_id": e["workcell_id"],
                     "evidence": {"rules": rules.get(eid, {}), "event_classes": dict(evc.get(eid, {}))}}
     return out

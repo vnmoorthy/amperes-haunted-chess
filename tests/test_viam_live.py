@@ -120,3 +120,15 @@ def test_similar_failures_and_atlas_documents(tmp_path, monkeypatch):
     monkeypatch.setattr(atlas, "_uri", lambda: (_ for _ in ()).throw(RuntimeError("MONGODB_URI is not set")))
     with pytest.raises(RuntimeError):
         atlas.sync(ra["dataset_id"])
+
+
+def test_robot_trial_reason_is_its_failure_category(monkeypatch):
+    from amperes import signatures as S
+
+    eps = [{"episode_id": "e1", "dataset_id": "d", "quality_status": "valid_failed_task", "category": None, "reason": "GRASP_FAILURE",
+            "session_id": "s", "workcell_id": "w"},
+           {"episode_id": "e2", "dataset_id": "d", "quality_status": "verified_success", "category": None, "reason": None,
+            "session_id": "s", "workcell_id": "w"}]
+    monkeypatch.setattr(S.store, "query", lambda sql, params=None: eps if "FROM episodes" in sql else [])
+    sigs = S.signatures()
+    assert set(sigs) == {"e1"} and sigs["e1"]["category"] == "GRASP_FAILURE"

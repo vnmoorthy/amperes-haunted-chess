@@ -98,6 +98,7 @@ def documents(dataset_id: str) -> dict[str, list[dict[str, Any]]]:
     for e in eps:
         s = sigs.get(e["episode_id"])
         e["_id"] = e["episode_id"]
+        e["category"] = e["category"] or (s["category"] if s else None)
         e["failure_signature"] = s["vector"] if s else None
         e["signature_version"] = SIGNATURE_VERSION
     findings = [_clean({**f, "_id": f["finding_id"]}) for f in store.query("SELECT * FROM quality_findings WHERE dataset_id=?", [dataset_id])]
