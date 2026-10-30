@@ -1,0 +1,4 @@
+episode_id,task_id,task_version,policy_id,policy_version,embodiment,device_id,config_id,session_id,workcell_id,operator_id,start_time,end_time,outcome_label,outcome_provenance,outcome_reason,attempt_index
+ep-001,pick_place_bin,2.1,teleop,n/a,6dof-arm,arm-01,cfg-v1,s-01,wc-A,op-1,1790000000.0,1790000000.9,success,operator,,1
+ep-002,pick_place_bin,2.1,teleop,n/a,6dof-arm,arm-01,cfg-v1,s-01,wc-A,op-1,1790000010.0,1790000010.9,failure,operator,grasp_missed,1
+ep-003,pick_place_bin,2.1,teleop,n/a,6dof-arm,arm-01,cfg-v1,s-01,wc-A,op-1,1790000020.0,1790000021.9,,,,2

@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amperes AI — Failure Lab</title>
+<script>try{var t=localStorage.getItem("amperes-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Cpath d='M17 47 32 15l15 32M23.5 36h17' fill='none' stroke='%23d8d9dc' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* Amperes AI brand (amperesai.com): black, silver monochrome, system UI type, wide-tracked light wordmark.
+   Status colours are the only hues, desaturated, and every status is also written in words. */
+/* Light is the default; dark follows the OS unless the viewer picks one (stored per browser). */
+:root{color-scheme:light;--bg:#f6f6f7;--glow:#ffffff;--panel:#ffffff;--panel2:#f2f2f4;--ink:#0c0c0d;--ink2:#2f3136;--muted:#5f6167;
+ --line:#e4e5e8;--line2:#d3d5d9;--chip:#efeff1;--header:rgba(246,246,247,.86);--bad:#b42318;--warn:#8a5a00;--ok:#1a7f4b;--measured:#1a7f4b;--hyp:#8a5a00;
+ --silver:linear-gradient(180deg,#3a3c41 0%,#1d1e21 52%,#5a5c61 100%);--btn:linear-gradient(180deg,#2a2b2f 0%,#0c0c0d 100%);--btn-ink:#f5f5f6;
+ --sheen:rgba(255,255,255,.75);--s1:#111214;--s2:#6b6e75;--s3:#1a7f4b;--s4:#8a5a00;--s5:#2c6db0;--s6:#a1475d;--logo-stroke:#d3d5d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--header:rgba(0,0,0,.82);--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;--measured:#86c9a0;--hyp:#d9b26a;
+ --silver:linear-gradient(180deg,#f5f5f6 0%,#cdced1 48%,#84868b 100%);--btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;
+ --sheen:rgba(255,255,255,.9);--s1:#f5f5f6;--s2:#9aa0a8;--s3:#86c9a0;--s4:#d9b26a;--s5:#8fb3d9;--s6:#c99aa6;--logo-stroke:#2a2b2f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--header:rgba(0,0,0,.82);--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;--measured:#86c9a0;--hyp:#d9b26a;
+ --silver:linear-gradient(180deg,#f5f5f6 0%,#cdced1 48%,#84868b 100%);--btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;
+ --sheen:rgba(255,255,255,.9);--s1:#f5f5f6;--s2:#9aa0a8;--s3:#86c9a0;--s4:#d9b26a;--s5:#8fb3d9;--s6:#c99aa6;--logo-stroke:#2a2b2f}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{margin:0;font:14px/1.5 system-ui,-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:var(--ink);
+ background:var(--bg) radial-gradient(ellipse 70% 55% at 50% 0%,var(--glow) 0%,var(--bg) 72%) fixed}
+header{display:flex;gap:28px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--header);backdrop-filter:blur(8px);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}.brand svg{width:34px;height:34px;flex:none}
+.wordmark{position:relative;font-weight:300;font-size:20px;line-height:1;letter-spacing:.36em;text-transform:uppercase;white-space:nowrap;margin:0;
+ background-image:var(--silver);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wordmark::after{content:attr(data-text);position:absolute;inset:0;background-image:linear-gradient(100deg,rgba(255,255,255,0) 42%,var(--sheen) 50%,rgba(255,255,255,0) 58%);
+ background-size:300% 100%;background-repeat:no-repeat;background-position:100% 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:sheen 11s ease-in-out infinite}
+@keyframes sheen{0%,62%{background-position:100% 0}92%,100%{background-position:0% 0}}
+@media (prefers-reduced-motion:reduce){.wordmark::after{animation:none}}
+.product{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+header .sub{color:var(--muted);font-size:12px;letter-spacing:.02em}
+nav{display:flex;gap:2px;flex-wrap:wrap}nav button{border:0;background:none;color:var(--muted);padding:7px 12px;border-radius:999px;cursor:pointer;font:inherit;letter-spacing:.04em}
+nav button:hover{color:var(--ink)}nav button.on{background:var(--chip);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+main{padding:20px 24px;max-width:1400px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+h3,h4{font-weight:500;letter-spacing:.02em;color:var(--ink)}h3{font-size:16px}h4{font-size:14px;color:var(--ink2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{padding:4px 2px}.stat b{display:block;font-size:26px;font-weight:300;letter-spacing:.02em;color:var(--ink)}.stat span{color:var(--muted);font-size:12px;letter-spacing:.03em}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase}tr.click{cursor:pointer}tr.click:hover{background:var(--panel2)}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;background:var(--chip);color:var(--ink2);border:1px solid var(--line2);white-space:nowrap;letter-spacing:.04em}
+.critical,.invalid_data,.infrastructure_error{color:var(--bad)}.major,.suspicious{color:var(--warn)}.verified_success,.valid_failed_task,.valid_success_unverified{color:var(--ok)}
+.cls{font-size:10px;font-weight:600;letter-spacing:.12em;padding:1px 6px;border-radius:999px;border:1px solid currentColor;margin-left:8px;text-transform:uppercase}
+.MEASURED{color:var(--measured)}.HYPOTHESIS,.ASSOCIATION{color:var(--hyp)}.SOURCE{color:var(--ink2)}.DERIVED{color:var(--muted)}
+input,select,textarea{font:inherit;padding:6px 9px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink2)}
+button.act{background:var(--btn);color:var(--btn-ink);border:0;border-radius:999px;padding:7px 16px;cursor:pointer;font:inherit;font-weight:500;letter-spacing:.04em}
+button.act:disabled,button.sec:disabled{opacity:.4;cursor:default}
+button.sec,a.sec{background:transparent;color:var(--ink);border:1px solid var(--line2);border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
+button.sec:hover,a.sec:hover{border-color:var(--ink2)}a{color:var(--ink2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.muted{color:var(--muted)}
+pre,code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}pre{white-space:pre-wrap;font-size:12px;background:var(--panel2);border:1px solid var(--line);padding:10px;border-radius:10px;max-height:320px;overflow:auto;color:var(--ink2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){.two{grid-template-columns:1fr}}
+.banner{border-left:3px solid var(--warn);padding:9px 14px;background:var(--panel2);border-radius:8px;margin-bottom:12px;color:var(--ink2)}
+svg.chart{width:100%;height:160px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.theme-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+.theme-toggle svg{width:14px;height:14px}
+button.stop{background:#c0362c;color:#fff;border:0;border-radius:14px;padding:16px 34px;font:inherit;font-size:20px;font-weight:700;letter-spacing:.12em;cursor:pointer;box-shadow:0 0 0 4px rgba(192,54,44,.25)}
+button.stop:hover{background:#a92d24}
+.scroll{overflow:auto;max-height:520px}img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.lbl button.big{font-size:18px;padding:14px 30px;border-radius:14px}.lbl button.on{outline:3px solid var(--ink2);outline-offset:2px}
+.lbl #lb-success.on{outline-color:var(--ok)}.lbl #lb-failure.on,.lbl #lcat button.on{outline-color:var(--bad)}
+.lbl kbd{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;opacity:.75;margin-left:6px;border:1px solid currentColor;border-radius:4px;padding:0 4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#000" style="stroke:var(--logo-stroke)"/><path d="M17 47 32 15l15 32M23.5 36h17" fill="none" stroke="#d8d9dc" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1 class="wordmark" data-text="Amperes">Amperes</h1><div class="product">Failure Lab</div></div>
+  </div>
+  <div class="sub" id="envline">local-first · no data leaves this machine</div>
+  <nav id="nav"></nav>
+  <a class="sec" href="/chess" style="margin-left:auto;text-decoration:none" title="Play Stockfish on the arm; every move is a labelled episode">♞ Chess arena</a>
+  <button class="sec theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Switch colour theme" style="margin-left:8px"></button>
+</header>
+<main id="main"></main>
+<script>
+const TABS=[["robot","Robot lab"],["live","Live robot"],["label","Label"],["overview","Overview"],["episodes","Episodes"],["quality","Quality"],["incidents","Incidents"],["ops","Operations"],["replay","Replay & regression"],["eval","Evaluation"],["export","Export"]];
+let tab=location.hash.slice(1)||"robot", state={};
+const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function api(p,opt){const r=await fetch(p,opt);if(!r.ok){let d;try{d=(await r.json()).detail}catch(e){d=r.statusText}throw new Error(d)}return r.json()}
+const post=(p,b)=>api(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+const pct=v=>v==null?"n/a":(100*v).toFixed(1)+"%", fmt=v=>typeof v==="number"?(Math.abs(v)>=100?v.toFixed(0):v.toPrecision(4)):esc(v);
+const cls=c=>`<span class="cls ${c.split(" ")[0]}">${c}</span>`, oc=o=>o==="success"?"verified_success":o==="failure"?"critical":"";
+const hlab=(h,n)=>h?`<p>Human label <span class="tag">human</span> <b class="${oc(h.outcome)}">${esc(h.outcome)}</b>${h.category?" · "+esc(h.category):""} · ${esc(h.reviewer)} · ${esc(h.created_at)} · agrees with verifier: ${h.agrees_with_verifier==null?"not comparable":h.agrees_with_verifier?"yes":"no"}${h.note?" · “"+esc(h.note)+"”":""}${n>1?` <span class="muted">(${n} labels in history, latest shown)</span>`:""}</p>`:"";
+function nav(){$("#nav").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" onclick="go('${k}')">${l}</button>`).join("")}
+function go(k){tab=k;location.hash=k;nav();render()}
+function table(rows,cols,onclick){if(!rows||!rows.length)return'<p class="muted">No records.</p>';
+ return `<div class="scroll"><table><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr>${rows.map((r,i)=>`<tr class="${onclick?"click":""}" ${onclick?`onclick="${onclick}(${i})"`:""}>${cols.map(c=>`<td class="${c[2]?esc(r[c[0]]):""}">${c[3]?c[3](r[c[0]],r):esc(r[c[0]])}</td>`).join("")}</tr>`).join("")}</table></div>`}
+async function datasetsSel(id,onch,kind){const ds=await api("/api/datasets");state.datasets=ds;const list=kind?ds.filter(d=>d.kind===kind):ds;
+ return `<select id="${id}" onchange="${onch}"><option value="">— dataset —</option>${list.map(d=>`<option value="${d.dataset_id}" ${state.ds===d.dataset_id?"selected":""}>${esc(d.name)} (${d.n_records})${d.synthetic?" · SYNTHETIC":""}</option>`).join("")}</select>`}
+function err(e){$("#main").insertAdjacentHTML("afterbegin",`<div class="panel banner"><b>Error:</b> ${esc(e.message)}</div>`)}
+
+async function render(){const m=$("#main");m.innerHTML='<p class="muted">Loading…</p>';try{await R[tab](m)}catch(e){m.innerHTML="";err(e)}}
+const R={};
+R.overview=async m=>{const o=await api("/api/overview"),h=await api("/api/health");state.atlas=!!h.atlas_configured;
+ $("#envline").textContent=`local-first · data in ${h.data_home} · code ${h.environment.code_digest} · diagnostic model: ${h.diagnostic_model.enabled?h.diagnostic_model.provider:"disabled"}`;
+ const empty=!o.episodes_processed.imported;
+ m.innerHTML=`${o.synthetic_present?'<div class="banner">Some loaded data is <b>SYNTHETIC</b> (simulation or generated fixtures). It is not customer or physical-robot evidence.</div>':""}
+ <div class="panel"><div class="grid">
+  <div class="stat"><b>${o.episodes_processed.imported}</b><span>imported episodes processed</span></div>
+  <div class="stat"><b>${o.episodes_processed.simulated}</b><span>simulated episodes</span></div>
+  <div class="stat"><b>${o.quality_findings.total}</b><span>quality findings (${Object.entries(o.quality_findings.by_severity).map(([k,v])=>k+" "+v).join(", ")||"none"}; +${o.quality_findings.info_notes} info notes)</span></div>
+  <div class="stat"><b>${o.incidents_open}</b><span>incidents open</span></div>
+  <div class="stat"><b>${o.requires_review}</b><span>episodes requiring human review</span></div></div></div>
+ ${empty?`<div class="panel"><h3>No records imported yet</h3><p>Load the labelled <b>synthetic</b> sample packages to try the workflow, or import your own records below.</p><button class="act" onclick="loadSamples()">Load SYNTHETIC sample data</button></div>`:""}
+ <div class="panel"><h3>Import your own records</h3><p class="muted">Canonical JSONL (<code>amperes.episode/1</code>) or a CSV package directory (episodes.csv + telemetry.csv [+ streams.csv, events.csv]). Files are read locally and never modified.</p>
+  <div class="row"><input id="ipath" size="60" placeholder="/absolute/path/to/dataset"><input id="iname" placeholder="name"><select id="iad"><option>auto</option><option>jsonl</option><option>csv_package</option></select>
+  <button class="sec" onclick="doValidate()">Validate</button><button class="act" onclick="doImport()">Import</button></div><div id="iout"></div></div>
+ <div class="two"><div class="panel"><h3>Recurring categories ${cls("MEASURED")}</h3>${table(o.recurring_categories,[["kind","kind"],["category","category"],["occurrences","occurrences"],["sessions","sessions"]])}</div>
+ <div class="panel"><h3>Quality status by collection day ${cls("MEASURED")}</h3>${Object.keys(o.daily_status).length?table(Object.entries(o.daily_status).map(([d,c])=>({day:d,...c})),[["day","day"],["verified_success","verified ok"],["valid_success_unverified","ok (unverified)"],["valid_failed_task","failed task (valid)"],["suspicious","suspicious"],["invalid_data","invalid"],["infrastructure_error","recording/infra error"],["unknown_outcome","unknown"]]):'<p class="muted">Needs imported episodes with start_time.</p>'}</div></div>`};
+async function loadSamples(){$("#main").insertAdjacentHTML("afterbegin",'<p class="muted">Generating and importing synthetic samples…</p>');try{await post("/api/samples/load");render()}catch(e){err(e)}}
+async function doValidate(){try{const r=await post("/api/datasets/validate",{path:$("#ipath").value,adapter:$("#iad").value});$("#iout").innerHTML=`<pre>${esc(JSON.stringify(r,null,1))}</pre>`}catch(e){$("#iout").innerHTML=`<pre>${esc(e.message)}</pre>`}}
+async function doImport(){try{const r=await post("/api/datasets/import",{path:$("#ipath").value,name:$("#iname").value||null,adapter:$("#iad").value});$("#iout").innerHTML=`<pre>imported ${r.episodes_imported}, rejected ${r.records_rejected}, incidents ${r.incidents}\n${esc(JSON.stringify(r.quality.status_counts))}</pre>`}catch(e){$("#iout").innerHTML=`<pre>${esc(e.message)}</pre>`}}
+
+R.episodes=async m=>{const sel=await datasetsSel("eds","state.ds=this.value;state.off=0;R.episodes($('#main'))");
+ const f=state.ef||{};const q=new URLSearchParams({limit:100,offset:state.off||0});if(state.ds)q.set("dataset_id",state.ds);Object.entries(f).forEach(([k,v])=>v&&q.set(k,v));
+ const r=await api("/api/episodes?"+q);state.eps=r.rows;
+ const fi=(k,l)=>`<input placeholder="${l}" value="${esc(f[k]||"")}" onchange="state.ef={...(state.ef||{}),${k}:this.value};state.off=0;R.episodes($('#main'))" size="12">`;
+ m.innerHTML=`<div class="panel"><div class="row">${sel}
+  <select onchange="state.ef={...(state.ef||{}),quality_status:this.value};R.episodes($('#main'))"><option value="">any status</option>${["verified_success","valid_success_unverified","valid_failed_task","suspicious","invalid_data","infrastructure_error","unknown_outcome"].map(s=>`<option ${f.quality_status===s?"selected":""}>${s}</option>`).join("")}</select>
+  ${fi("task_id","task")}${fi("policy_id","policy")}${fi("workcell_id","workcell")}${fi("session_id","session")}${fi("outcome","outcome")}
+  <span class="muted">${r.total} episodes</span><button class="sec" onclick="state.off=Math.max(0,(state.off||0)-100);R.episodes($('#main'))">‹</button><button class="sec" onclick="state.off=(state.off||0)+100;R.episodes($('#main'))">›</button></div></div>
+ <div class="two"><div class="panel">${table(r.rows,[["episode_id","episode"],["quality_status","status",1],["outcome","outcome (as recorded)"],["verified","verified",0,v=>v?"yes":"no"],["category","failure category"],["session_id","session"],["workcell_id","workcell"],["replay_class","replay"]],"openEp")}</div><div class="panel" id="epd"><p class="muted">Select an episode.</p></div></div>`};
+async function openEp(i){const id=state.eps[i].episode_id;const d=await api("/api/episodes/"+id);state.ep=d;const s=d.source_values,x=d.derived_diagnostics;const names=Object.keys(s.streams);
+ $("#epd").innerHTML=`<h3>${esc(id)}</h3>${s.source.synthetic?'<div class="banner">SYNTHETIC: '+esc(s.source.synthetic_note||"")+'</div>':""}
+ <h4>Source values ${cls("SOURCE")}</h4><table>${[["dataset",s.source.dataset_id],["adapter",s.source.adapter],["source record",s.source.source_record_id],["task",JSON.stringify(s.task)],["policy",JSON.stringify(s.policy)],["robot",JSON.stringify(s.robot)],["session",JSON.stringify(s.session)],["start/end",`${s.start_time??"unknown"} / ${s.end_time??"unknown"}`],["instruction",(s.conditions||{}).instruction||""],["outcome as recorded",JSON.stringify(s.outcome_as_recorded)]].map(([k,v])=>`<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join("")}</table>
+ ${hlab(d.human_label,(d.human_labels||[]).length)}
+ <div class="row" style="margin:8px 0"><select id="stsel" onchange="plotStream()">${names.map(n=>`<option>${n}</option>`).join("")}</select><span class="muted" id="stinfo"></span></div><svg class="chart" id="chart"></svg>
+ ${s.events.length?`<h4>Events ${cls("SOURCE")}</h4>${table(s.events,[["t","t"],["type","type"],["code","code"],["message","message"],["source","source"]])}`:""}
+ <h4>Derived diagnostics ${cls("DERIVED")}</h4><p>Status: <b class="${x.quality_status}">${x.quality_status}</b> · replay class ${x.replay_class}</p>
+ ${table(x.findings,[["rule_id","rule"],["severity","severity",1],["record_ref","where"],["t","t",0,fmt],["explanation","explanation"],["expected","expected"],["deterministic","det.",0,v=>v?"yes":"heuristic"],["needs_review","review",0,v=>v?"yes":""]])}
+ ${x.diagnosis?`<h4>Failure classification ${cls("DERIVED")}</h4><p><b>${x.diagnosis.category}</b> (rule ${x.diagnosis.rule_id}, confidence ${x.diagnosis.confidence})</p><p class="muted">${esc(x.diagnosis.causal_note)}</p><pre>${esc(JSON.stringify(x.diagnosis.observed_evidence,null,1))}</pre>`:""}
+ ${s.policy_reported_phases.length?`<p class="muted">Policy-reported phases (claims, not used for verification): ${s.policy_reported_phases.map(p=>p.value+"@"+p.t).join(" → ")}</p>`:""}
+ <div class="row" style="margin:8px 0"><button class="sec" onclick="labelEp()">${d.human_label?"Re-label outcome":"Label outcome"}</button><button class="sec" onclick="simEp('${id}','local')">Find similar failures</button>${state.atlas?`<button class="sec" onclick="simEp('${id}','atlas')">…across all stations (Atlas Vector Search)</button>`:""}</div><div id="simout"></div>
+ ${x.replay_class==="A"||x.replay_class==="B"?`<button class="sec" onclick="repro('${id}')">Attempt reproduction</button><div id="rout"></div>`:`<p class="muted">Replay not possible: class ${x.replay_class} (${({C:"partial initial conditions",D:"historical log only",E:"insufficient data"})[x.replay_class]||""}).</p>`}`;plotStream()}
+function plotStream(){const n=$("#stsel").value,s=state.ep.source_values.streams[n];const svg=$("#chart");if(!s||!s.t||!s.t.length){svg.innerHTML="";return}
+ const W=600,H=160,t=s.t,dims=s.values[0].length;let lo=Infinity,hi=-Infinity;s.values.forEach(r=>r.forEach(v=>{if(typeof v==="number"&&isFinite(v)){lo=Math.min(lo,v);hi=Math.max(hi,v)}}));if(lo===hi){lo-=1;hi+=1}
+ const X=v=>(v-t[0])/(t[t.length-1]-t[0]||1)*W,Y=v=>H-6-(v-lo)/(hi-lo)*(H-12);
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=[...Array(Math.min(dims,6)).keys()].map(d=>`<polyline fill="none" style="stroke:var(--s${d+1})" stroke-width="1.4" points="${t.map((tt,i)=>{const v=s.values[i][d];return typeof v==="number"&&isFinite(v)?X(tt).toFixed(1)+","+Y(v).toFixed(1):""}).filter(Boolean).join(" ")}"/>`).join("");
+ const f=state.ep.derived_diagnostics.findings.filter(f=>f.record_ref&&f.record_ref.startsWith(n)&&f.t!=null);
+ svg.innerHTML+=f.map(x=>`<line x1="${X(x.t)}" x2="${X(x.t)}" y1="0" y2="${H}" style="stroke:var(--bad)" stroke-dasharray="3,3"><title>${esc(x.rule_id)}</title></line>`).join("");
+ $("#stinfo").textContent=`${s.kind} · ${s.n} samples · ${s.units||"units unknown"} · ${s.expected_rate_hz?s.expected_rate_hz+" Hz declared":"rate undeclared"} · range ${lo.toPrecision(3)}…${hi.toPrecision(3)}${f.length?" · red lines = findings":""}`}
+async function simEp(id,engine){$("#simout").innerHTML='<p class="muted">Searching…</p>';try{const r=await api(`/api/episodes/${id}/similar?engine=${engine}&k=8`);
+ $("#simout").innerHTML=`<p class="muted">${esc(r.engine||"")} · ${esc(r.note||"")}</p>`+table(r.matches,[["episode_id","episode"],["score","similarity",0,fmt],["status","status",1],["category","category"],["workcell_id","workcell"],["dataset_id","dataset"]])}catch(e){$("#simout").innerHTML=esc(e.message)}}
+async function repro(id){$("#rout").innerHTML='<p class="muted">Running…</p>';try{const r=await post("/api/reproduce/"+id);$("#rout").innerHTML=table(r.map(x=>({mode:x.mode,cls:x.replay_class,result:x.classification,dev:x.comparison&&x.comparison.max_object_pos_deviation_m,disc:x.comparison&&(x.comparison.discrepancies||[x.comparison.reason]).join("; ")})),[["mode","mode"],["cls","replay class"],["result","classification"],["dev","max deviation (m)",0,fmt],["disc","discrepancies"]])}catch(e){$("#rout").innerHTML=esc(e.message)}}
+
+R.quality=async m=>{const sel=await datasetsSel("qds","state.ds=this.value;R.quality($('#main'))");if(!state.ds){m.innerHTML=`<div class="panel">${sel}<p class="muted">Pick a dataset.</p></div>`;return}
+ const q=await api("/api/quality/"+state.ds);const s=q.summary;
+ m.innerHTML=`<div class="panel">${sel} ${q.dataset.synthetic?'<span class="tag">SYNTHETIC</span>':""}</div>
+ ${s?`<div class="panel"><h3>Quality dimensions ${cls("MEASURED")}</h3><p class="muted">Ruleset ${s.ruleset_version}. ${esc(s.composite_note)}</p>
+ ${table(Object.entries(s.dimensions).map(([d,v])=>({d,...v,sev:Object.entries(v.by_severity).map(([k,n])=>k+" "+n).join(", ")})),[["d","dimension"],["episodes_affected","episodes affected"],["findings","findings"],["sev","by severity"]])}
+ <h4>Episode status</h4>${table(Object.entries(s.status_counts).map(([k,v])=>({k,v})),[["k","status",1],["v","episodes"]])}</div>`:'<div class="panel muted">No import report (simulator dataset). Run <code>python -m amperes.cli qc &lt;dataset&gt;</code>.</div>'}
+ <div class="panel"><h3>Violated rules</h3>${table(q.rules,[["rule_id","rule"],["dimension","dimension"],["severity","severity",1],["n","findings"],["episodes","episodes"],["deterministic","deterministic",0,v=>v?"yes":"heuristic"],["needs_review","needs review",0,v=>v?"yes":""]],"ruleFindings")}<div id="rf"></div></div>
+ <div class="panel"><h3>Rejected records (schema)</h3>${q.rejected_records.length?`<pre>${esc(JSON.stringify(q.rejected_records,null,1))}</pre>`:'<p class="muted">None.</p>'}</div>`;state.qrules=q.rules};
+async function ruleFindings(i){const r=state.qrules[i];const f=await api(`/api/findings?dataset_id=${state.ds}&rule_id=${r.rule_id}&limit=100`);state.qf=f;
+ $("#rf").innerHTML=`<h4>${r.rule_id} — evidence</h4>`+table(f,[["episode_id","episode"],["record_ref","where"],["t","t",0,fmt],["observed","observed"],["expected","expected"],["recommendation","next action"]],"revFinding")+`<p class="muted">Click a finding to review it.</p><div id="revbox"></div>`}
+function revFinding(i){const f=state.qf[i];$("#revbox").innerHTML=`<div class="row"><b>${esc(f.finding_id)}</b><select id="rdec">${["correct_actionable","correct_not_actionable","incorrect","duplicate","insufficient_evidence","needs_investigation"].map(d=>`<option>${d}</option>`).join("")}</select><input id="rrev" placeholder="reviewer id (pseudonym)"><input id="rnote" placeholder="notes" size="30"><button class="act" onclick="saveRev('${f.finding_id}')">Save review</button><button class="sec" onclick="state.eps=[{episode_id:'${f.episode_id}'}];go('episodes');setTimeout(()=>openEp(0),300)">Open episode</button></div><div id="revout"></div>`}
+async function saveRev(fid){try{await post("/api/reviews",{target_kind:"finding",target_id:fid,decision:$("#rdec").value,reviewer:$("#rrev").value,notes:$("#rnote").value});const s=await api("/api/reviews/"+state.ds);$("#revout").innerHTML=`<p>Saved. Reviewed ${s.overall.reviewed}/${s.overall.findings}; precision among reviewed: ${typeof s.overall.precision_among_reviewed.value==="number"?s.overall.precision_among_reviewed.value.toFixed(2)+" ("+s.overall.precision_among_reviewed.numerator+"/"+s.overall.precision_among_reviewed.denominator+")":"not evaluated"}. ${esc(s.recall)}.</p>`}catch(e){$("#revout").innerHTML=esc(e.message)}}
+
+R.incidents=async m=>{const sel=await datasetsSel("ids","state.ds=this.value;R.incidents($('#main'))");const l=await api("/api/incidents"+(state.ds?"?dataset_id="+state.ds:""));state.incs=l;
+ m.innerHTML=`<div class="panel row">${sel}<button class="sec" onclick="rebuild()">Re-group incidents</button></div><div class="two"><div class="panel">${table(l,[["title","incident"],["kind","kind"],["severity","severity",1],["status","status"],["n_occurrences","occurrences"],["n_sessions","sessions"]],"openInc")}</div><div class="panel" id="incd"><p class="muted">Select an incident.</p></div></div>`};
+async function rebuild(){if(!state.ds)return alert("pick a dataset");await post("/api/incidents/build/"+state.ds);R.incidents($("#main"))}
+async function openInc(i){const id=state.incs[i].incident_id;const x=await api("/api/incidents/"+id);
+ $("#incd").innerHTML=`<h3>${esc(x.title)}</h3><p><span class="tag">${x.kind}</span> <span class="tag ${x.severity}">${x.severity}</span> status <b>${x.status}</b> · ${x.n_occurrences} occurrences · ${x.n_episodes} episodes · ${x.n_sessions} sessions</p><p class="muted">Grouped by: ${esc(x.grouping_reason)}</p>
+ <h4>Observed facts ${cls("MEASURED")}</h4><ul>${x.facts.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
+ <h4>Possible causes ${cls("HYPOTHESIS")}</h4><ul>${x.hypotheses.map(h=>`<li>${esc(h.text)} <span class="muted">— evidence needed: ${esc(h.evidence_needed)}</span></li>`).join("")}</ul>
+ <h4>Suggested next actions</h4><ul>${x.next_actions.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>
+ ${x.scope.related_incidents.length?`<h4>Related incidents in other datasets</h4>${table(x.scope.related_incidents,[["incident_id","id"],["dataset_id","dataset"],["status","status"],["n_occurrences","occ."]])}`:""}
+ <h4>Evidence</h4><pre>${esc(JSON.stringify(x.evidence.slice(0,8),null,1))}</pre>
+ <h4>History</h4>${table(x.history,[["at","at"],["actor","actor"],["from_status","from"],["to_status","to"],["note","note"]])}
+ <div class="row"><select id="ist">${["investigating","reproduced","resolved","closed","unresolved","open"].map(s=>`<option>${s}</option>`).join("")}</select><input id="iact" placeholder="your id"><input id="inote" placeholder="note" size="28"><button class="act" onclick="setInc('${id}')">Change status</button>
+ <button class="sec" onclick="incReg('${id}')">Create regression case</button><a class="sec" href="/api/export/incident/${id}?fmt=md" target="_blank">Export .md</a> <a class="sec" href="/api/export/incident/${id}?fmt=json" target="_blank">.json</a></div><div id="iout2"></div>
+ <p class="muted">Regression cases: ${esc(JSON.stringify(x.regression_case_ids||[]))}</p>`}
+async function setInc(id){try{await post(`/api/incidents/${id}/status`,{to:$("#ist").value,actor:$("#iact").value||"ui-user",note:$("#inote").value});const i=state.incs.findIndex(x=>x.incident_id===id);openInc(i)}catch(e){$("#iout2").innerHTML=`<p class="critical">${esc(e.message)}</p>`}}
+async function incReg(id){const r=await post(`/api/incidents/${id}/regression`);$("#iout2").innerHTML=`<pre>${esc(JSON.stringify(r,null,1))}</pre>`}
+
+R.ops=async m=>{const sel=await datasetsSel("ods","state.ds=this.value;R.ops($('#main'))","import");if(!state.ds||!state.datasets.find(d=>d.dataset_id===state.ds&&d.kind==="import")){m.innerHTML=`<div class="panel">${sel}<p class="muted">Pick an imported dataset with operational events.</p></div>`;return}
+ const [x,b,c]=await Promise.all([api(`/api/ops/${state.ds}/metrics`),api(`/api/ops/${state.ds}/bottlenecks`),api(`/api/ops/${state.ds}/correlate`)]);const y=x.yield.usable_data_yield;
+ const metr=o=>Object.entries(o).filter(([k,v])=>v&&typeof v==="object"&&"status" in v).map(([k,v])=>({k,val:v.status==="computed"?(v.value!=null?fmt(v.value):"computed"):"not computable",detail:v.status==="computed"?(v.numerator!=null?`${v.numerator} / ${v.denominator} ${v.unit||""}`:(v.n!=null?"n="+v.n:"")):v.reason,def:v.definition||""}));
+ m.innerHTML=`<div class="panel">${sel}</div>
+ <div class="panel"><h3>Usable-data yield ${cls("MEASURED")}</h3>${y.status==="computed"?`<p style="font-size:20px"><b>${pct(y.value)}</b> = ${y.numerator} usable / ${y.denominator} eligible <span class="muted">(95% CI ${pct(y.ci95[0])}–${pct(y.ci95[1])}, rule ${y.rule_version})</span></p><p class="muted">Usable statuses: ${y.usable_statuses.join(", ")}. Eligibility: ${esc(y.eligibility)}. ${esc(x.yield.note)}</p>`:`<p>Not computable: ${esc(y.reason)}</p>`}
+  <h4>Where the unusable episodes went ${cls("MEASURED")} <span class="muted">(${x.yield_loss_attribution.lost_episodes} not usable)</span></h4>
+  ${table(x.yield_loss_attribution.rows,[["cause","attributed to"],["basis","basis"],["episodes","episodes"],["share_of_lost","share",0,pct],["episode_hours","episode-hours",0,v=>v==null?"n/a":fmt(v)],["sessions","sessions"],["workcells","workcells",0,v=>v.join(", ")]])}
+  <p class="muted">${esc(x.yield_loss_attribution.note)}</p>
+  <div class="two"><div>${table(Object.entries(x.yield.status_counts).map(([k,v])=>({k,v})),[["k","status",1],["v","episodes"]])}</div><div><h4>Data-quality loss (distinct episodes)</h4>${table(Object.entries(x.data_quality_loss).filter(([k])=>k!=="unit").map(([k,v])=>({k,v})),[["k","category"],["v","episodes"]])}</div></div></div>
+ <div class="two"><div class="panel"><h3>Throughput ${cls("MEASURED")}</h3>${table(metr(x.throughput),[["k","metric"],["val","value"],["detail","numerator / denominator or reason"]])}</div>
+ <div class="panel"><h3>Reliability ${cls("MEASURED")}</h3>${table(metr(x.reliability),[["k","metric"],["val","value"],["detail","detail"]])}<h4>Availability by workcell</h4>${table(Object.entries(x.reliability.availability_by_workcell).map(([k,v])=>({k,val:v.status==="computed"?pct(v.value):"not computable",d:v.status==="computed"?`downtime ${v.downtime_h.toFixed(3)} h / ${v.scheduled_h.toFixed(2)} h`:v.reason})),[["k","workcell"],["val","availability"],["d","detail"]])}</div></div>
+ <div class="panel"><h3>Bottleneck findings ${cls("ASSOCIATION")}</h3>${table(b,[["rule","rule"],["kind","kind"],["observed_evidence","evidence",0,v=>`<code>${esc(JSON.stringify(v))}</code>`],["comparison_baseline","baseline",0,v=>`<code>${esc(JSON.stringify(v))}</code>`],["sample_size","n"],["confidence_and_limitations","limits"],["recommended_investigation","next"]])}</div>
+ <div class="panel"><h3>Cross-session patterns</h3><h4>Directly observed repetition ${cls("MEASURED")}</h4>${table(c.directly_observed_repetition,[["event_class","class"],["code","code"],["occurrences","occurrences"],["sessions","sessions",0,v=>v.length],["workcells","workcells",0,v=>v.join(", ")],["grouping_reason","why grouped"]])}
+  <h4>Statistical association ${cls("ASSOCIATION")}</h4>${table(c.statistical_association,[["code","code"],["config_id","config"],["sessions_with_code_given_config","sessions w/ code | config"],["sessions_with_code_other_configs","| other configs"],["note","note"]])}
+  <h4>Proposed explanations ${cls("HYPOTHESIS")}</h4>${table(c.proposed_causal_explanations,[["about","about"],["hypothesis","hypothesis"],["test_to_verify","how to test"]])}<p class="muted">${esc(c.limitations)}</p></div>`};
+
+R.replay=async m=>{const ex=await api("/api/experiments"),su=await api("/api/regression/suites"),rp=await api("/api/reproductions?limit=60");state.suites=su;
+ m.innerHTML=`<div class="panel"><h3>Simulator experiments ${cls("MEASURED")} <span class="tag">simulation</span></h3>${table(ex,[["experiment_id","experiment"],["status","status"],["created_at","created"],["error","error"]])}
+ <div class="row"><input id="ndev" value="200" size="5"> dev <input id="nheld" value="400" size="5"> held-out <button class="act" onclick="startExp()">Run new experiment</button><span id="job" class="muted"></span></div></div>
+ <div class="panel"><h3>Reproduction attempts</h3><p class="muted">Classes: A faithful simulator replay · B initial conditions · C partial · D log only · E not reproducible. Reproducing a symptom does not establish its cause.</p>
+ ${table(rp,[["original_episode_id","original"],["mode","mode"],["replay_class","class"],["classification","result"],["comparison","max deviation (m)",0,v=>v&&v.max_object_pos_deviation_m!=null?fmt(v.max_object_pos_deviation_m):""],["comparison","discrepancies",0,v=>v?esc((v.discrepancies||[v.reason]).join("; ")):""]])}</div>
+ <div class="panel"><h3>Regression suites</h3>${table(su,[["suite_id","suite"],["name","name"],["n_cases","cases"],["note","note"]],"openSuite")}<div id="sd"></div></div>`};
+async function startExp(){try{const j=await post("/api/experiments",{n_dev:+$("#ndev").value,n_heldout:+$("#nheld").value});pollJob(j.job_id)}catch(e){$("#job").textContent=e.message}}
+async function pollJob(id){const j=await api("/api/jobs/"+id);$("#job").textContent=`${j.status}: ${j.log.slice(-1)[0]||""} ${j.error||""}`;if(j.status==="running")setTimeout(()=>pollJob(id),1500);else if(j.status==="completed")R.replay($("#main"))}
+async function openSuite(i){const s=state.suites[i];const d=await api("/api/regression/suites/"+s.suite_id);
+ $("#sd").innerHTML=`<h4>${esc(s.suite_id)}</h4><h5>Results by policy</h5>${table(d.results_by_policy,[["policy_label","policy"],["status","status"],["n","cases"]])}<h5>Cases</h5>${table(d.cases.slice(0,80),[["kind","kind"],["condition_id","condition"],["seed","seed"],["source_outcome","source outcome"],["source_episode_id","source episode"],["incident_id","incident"]])}
+ <div class="row"><textarea id="pcfg" rows="2" cols="50">{"obstacle_aware": true}</textarea><button class="act" onclick="runSuite('${s.suite_id}')">Rerun suite with this policy config</button></div><div id="srun"></div>`}
+async function runSuite(id){$("#srun").innerHTML='<p class="muted">Running…</p>';try{const r=await post(`/api/regression/suites/${id}/run`,{policy_config:JSON.parse($("#pcfg").value||"{}")});$("#srun").innerHTML=`<pre>${esc(JSON.stringify({passed:r.passed+"/"+r.n_cases,status:r.status_counts,new_failures:r.new_failures.length},null,1))}</pre>`}catch(e){$("#srun").innerHTML=esc(e.message)}}
+
+R.eval=async m=>{const ex=(await api("/api/experiments")).filter(e=>e.status==="completed");const de=await api("/api/detector-eval");let h="";
+ if(ex.length){const e=await api("/api/experiments/"+ex[0].experiment_id);const s=e.summary;
+  const rows=[];Object.entries(s.step6_comparison).forEach(([k,v])=>["heldout","nominal"].forEach(sp=>{const c=v[sp];rows.push({arm:k,split:sp,base:`${c.baseline.successes}/${c.n_pairs}`,treat:`${c.treatment.successes}/${c.n_pairs}`,diff:pct(c.success_rate_diff),ci:`${pct(c.success_rate_diff_ci95_paired_bootstrap[0])} … ${pct(c.success_rate_diff_ci95_paired_bootstrap[1])}`,fixed:c.fixed_by_treatment,broken:c.broken_by_treatment,p:c.mcnemar_exact_p==null?"n/a":c.mcnemar_exact_p.toExponential(2),dur:c.treatment.mean_duration_all_s.toFixed(2)})}));
+  h+=`<div class="panel"><h3>Baseline vs intervention — ${esc(s.experiment_id)} ${cls("MEASURED")} <span class="tag">simulation only</span></h3><p class="muted">Selected on dev only: <b>${esc(s.step5_intervention.selected)}</b>; alternative: ${esc(s.step5_intervention.alternative)}. Rule: ${esc(s.step5_intervention.selection_rule)}. Paired on identical conditions; exact McNemar; paired bootstrap CI.</p>
+  ${table(rows,[["arm","arm"],["split","split"],["base","baseline"],["treat","treatment"],["diff","Δ success"],["ci","95% CI"],["fixed","fixed"],["broken","broken"],["p","McNemar p"],["dur","mean duration (s)"]])}
+  <div class="two"><img src="/api/export/experiment/${s.experiment_id}?file=heldout_success${themeSuffix()}.png" alt="Held-out success rates by arm"><img src="/api/export/experiment/${s.experiment_id}?file=representative_failure${themeSuffix()}.png" alt="Representative failure trajectory"></div>
+  <p class="muted">Limitations: Cartesian gantry in MuJoCo; scripted baseline; perturbations are simulator parameters. No physical-robot claim.</p></div>`}
+ else h+='<div class="panel muted">No completed simulator experiment. Run one from “Replay & regression”.</div>';
+ h+=`<div class="panel"><h3>Quality-rule detection on labelled SYNTHETIC corpus ${cls("MEASURED")}</h3>${de.status==="not evaluated"?`<p class="muted">Not evaluated. Run <code>${de.how}</code>.</p>`:`<p class="muted">${esc(de.caveat)} Valid-record preservation: ${de.valid_record_preservation.numerator}/${de.valid_record_preservation.denominator}; clean failed tasks kept valid: ${de.valid_failed_tasks_kept_as_valid_failed.numerator}/${de.valid_failed_tasks_kept_as_valid_failed.denominator}; ${de.per_episode_ms} ms/episode.</p>
+ ${table(Object.entries(de.by_defect).map(([k,v])=>({k,...v,rec:`${v.detected}/${v.n}`,det:v.detectable_by_design?"yes":"no — no state evidence"})),[["k","injected defect"],["expected_rules","expected rule",0,v=>v.join(", ")],["rec","detected"],["det","detectable by design"]])}
+ ${table(Object.entries(de.by_rule).map(([k,v])=>({k,...v,pr:typeof v.precision.value==="number"?`${v.precision.value.toFixed(2)} (${v.precision.numerator}/${v.precision.denominator})`:"not evaluated",rc:typeof v.recall.value==="number"?`${v.recall.value.toFixed(2)} (${v.recall.numerator}/${v.recall.denominator})`:"not evaluated"})),[["k","rule"],["tp","TP"],["fp","FP"],["fn","FN"],["pr","precision"],["rc","recall"]])}`}</div>`;m.innerHTML=h};
+
+R.export=async m=>{const ex=(await api("/api/experiments")).filter(e=>e.status==="completed");const ds=await api("/api/datasets");
+ m.innerHTML=`<div class="panel"><h3>Simulator experiment bundles</h3>${table(ex,[["experiment_id","experiment",0,(v)=>`${v} — <a href="/api/export/experiment/${v}?file=bundle.zip">bundle.zip</a> · <a href="/api/export/experiment/${v}?file=report.md" target="_blank">report.md</a> · <a href="/api/export/experiment/${v}?file=summary.json" target="_blank">summary.json</a> · <a href="/api/export/experiment/${v}?file=manifest.json" target="_blank">manifest.json</a>`]])}</div>
+ <div class="panel"><h3>Pilot readiness reports</h3>${table(ds.filter(d=>d.kind==="import"),[["name","dataset"],["dataset_id","export",0,v=>`<a href="/api/export/pilot/${v}?fmt=md" target="_blank">Markdown</a> · <a href="/api/export/pilot/${v}?fmt=json" target="_blank">JSON</a>`],["dataset_id","delete",0,v=>`<button class="sec" onclick="delDs('${v}')">Delete dataset + derived data</button>`]])}</div>`};
+async function delDs(id){if(!confirm("Permanently delete "+id+" and all derived findings, incidents, events and artifacts?"))return;await api(`/api/datasets/${id}?confirm=true`,{method:"DELETE"});R.export($("#main"))}
+
+R.live=async m=>{clearTimeout(state.liveTimer);const L=await api("/api/live");
+ const pctOk=L.read_success_rate==null?"–":pct(L.read_success_rate), cam=L.camera||{};
+ const tile=(v,l,c="")=>`<div class="stat"><b class="${c}">${v}</b><span>${l}</span></div>`;
+ const evs=(L.events||[]).slice().reverse();
+ m.innerHTML=`<div class="panel"><div class="row"><h3 style="margin:0">Live robot telemetry ${cls("MEASURED")} <span class="tag">real machine · read-only</span></h3>
+  <button class="act" onclick="liveStart(60)" ${L.running?"disabled":""}>Capture 60 s</button><button class="sec" onclick="liveStart(180)" ${L.running?"disabled":""}>Capture 3 min</button>
+  <button class="sec" onclick="post('/api/live/stop')" ${L.running?"":"disabled"}>Stop</button><span class="muted">${L.running?`recording ${L.machine||""} · ${fmt(L.elapsed||0)} / ${L.seconds}s`:(L.done?"capture finished":"idle")}</span></div>
+  <p class="muted">Amperes never commands the robot: only get_joint_positions, get_end_position, is_moving, get_images and get_machine_status are callable (enforced in code). Move the arm from your own controller or the Viam app while recording to produce motion episodes.</p></div>
+ ${L.error?`<div class="panel banner"><b>Capture error:</b> ${esc(L.error)}</div>`:""}
+ <div class="panel"><div class="grid">${tile(L.link_down?"DOWN":(L.running||L.done?"UP":"–"),"telemetry link",L.link_down?"critical":"verified_success")}${tile(pctOk,"read success ("+(L.read_ok||0)+" ok / "+(L.read_fail||0)+" failed)")}
+  ${tile(L.achieved_hz?L.achieved_hz.toFixed(2)+" Hz":"–","achieved rate (target "+(L.rate_hz||"–")+" Hz)")}${tile(L.latency_p50_ms!=null?fmt(L.latency_p50_ms)+" / "+fmt(L.latency_p95_ms)+" ms":"–","latency p50 / p95")}
+  ${tile(cam.enabled===false?"off":((cam.ok||0)+" / "+((cam.ok||0)+(cam.no_frame||0))),"camera frames delivered",cam.no_frame?"major":"")}${tile(L.arm_moving==null?"–":(L.arm_moving?"moving":"still"),"arm")}${tile(L.reconnects??"–","link reconnects")}</div></div>
+ <div class="two"><div class="panel"><h4>Joint positions (deg), last ${(L.joints_recent||[]).length} samples</h4><svg class="chart" id="lchart"></svg><p class="muted">${L.joints?"now: "+L.joints.map(v=>v.toFixed(1)).join(", "):""}</p></div>
+ <div class="panel"><h4>Events ${cls("MEASURED")}</h4>${table(evs,[["timestamp","t",0,v=>new Date(v*1000).toLocaleTimeString()],["event_type","type"],["code","code"],["message","detail"]])}</div></div>
+ ${L.summary?`<div class="panel"><h3>Capture audited</h3><p>${L.summary.ticks} ticks, ${L.summary.failed_ticks} failed · ${L.summary.episodes} episode(s) (${[...new Set(L.summary.segments)].join(", ")}) · camera ${L.summary.camera_probes-L.summary.camera_no_frame}/${L.summary.camera_probes} frames · incidents ${L.summary.incidents} · statuses ${esc(JSON.stringify(L.summary.quality))}</p>
+   <button class="act" onclick="state.ds='${L.summary.dataset_id}';go('ops')">Open yield audit</button> <button class="sec" onclick="state.ds='${L.summary.dataset_id}';go('incidents')">Incidents</button> <button class="sec" onclick="state.ds='${L.summary.dataset_id}';state.ef={};go('episodes')">Episodes</button>
+   ${state.atlas?`<button class="sec" onclick="atlasSync('${L.summary.dataset_id}')">Sync to MongoDB Atlas</button>`:""}<span id="atlasout" class="muted"></span></div>`:""}`;
+ const jr=L.joints_recent||[],svg=$("#lchart");if(jr.length>1&&svg){const W=600,H=160,pts=jr.filter(r=>r[1]);let lo=Infinity,hi=-Infinity;pts.forEach(r=>r[1].forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v)}));if(hi-lo<1){lo-=1;hi+=1}
+  const X=t=>(t-jr[0][0])/((jr[jr.length-1][0]-jr[0][0])||1)*W,Y=v=>H-6-(v-lo)/(hi-lo)*(H-12);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=[0,1,2,3,4,5].map(d=>`<polyline fill="none" style="stroke:var(--s${d+1})" stroke-width="1.6" points="${pts.map(r=>X(r[0]).toFixed(1)+","+Y(r[1][d]).toFixed(1)).join(" ")}"/>`).join("")+jr.filter(r=>!r[1]).map(r=>`<line x1="${X(r[0])}" x2="${X(r[0])}" y1="0" y2="${H}" style="stroke:var(--bad)" stroke-dasharray="2,3"><title>failed read</title></line>`).join("")}
+ if(tab==="live"&&(L.running||L.starting))state.liveTimer=setTimeout(()=>R.live($("#main")),1000)};
+async function atlasSync(id){$("#atlasout").textContent=" syncing…";try{const r=await post("/api/atlas/sync/"+id);
+ $("#atlasout").textContent=" synced: "+Object.entries(r.collections).map(([k,v])=>k+" "+(v.upserted+v.matched)).join(", ")+" · raw streams not sent"}catch(e){$("#atlasout").textContent=" "+e.message}}
+async function liveStart(sec){try{await post("/api/live/start",{seconds:sec});setTimeout(()=>R.live($("#main")),800)}catch(e){err(e)}}
+
+R.label=async m=>{const sel=await datasetsSel("lds","state.ds=this.value;state.lq=null;R.label($('#main'))");
+ if(!state.lq||!state.lq.length||state.lqds!==state.ds){const q=new URLSearchParams({limit:20});if(state.ds)q.set("dataset_id",state.ds);state.lq=await api("/api/labels/queue?"+q);state.lqds=state.ds}
+ const S=await api("/api/labels/summary"+(state.ds?"?dataset_id="+state.ds:"")),a=S.agreement;state.lcats=S.categories;state.lsel={outcome:null,category:null};
+ let rv="";try{rv=localStorage.getItem("amperes-reviewer")||""}catch(e){}
+ const it=state.lq[0];
+ m.innerHTML=`<div class="panel"><div class="row">${sel}<span class="muted">${state.lq.length} in queue${state.ds?"":" · real datasets first, newest first"}</span>
+  <label style="margin-left:auto">reviewer <input id="lrev" value="${esc(rv)}" placeholder="pseudonymous id" size="14" onchange="try{localStorage.setItem('amperes-reviewer',this.value)}catch(e){}"></label></div></div>
+ <div class="panel"><div class="grid"><div class="stat"><b>${S.labelled}</b><span>episodes labelled · ${S.unlabelled} unlabelled</span></div>
+  <div class="stat"><b>${a.rate==null?"–":pct(a.rate)}</b><span>agreement with verifier ${a.rate==null?"(nothing comparable yet)":`(${a.agree}/${a.comparable} · 95% CI ${pct(a.ci95[0])}–${pct(a.ci95[1])})`}</span></div>
+  <div class="stat"><b>${S.disagreements.length}</b><span>disagreements</span></div><div class="stat"><b>${S.reviewers.length}</b><span>reviewer${S.reviewers.length===1?"":"s"}</span></div></div>${state.lmsg?`<p class="muted">${state.lmsg}</p>`:""}</div>
+ ${it?`<div class="panel lbl"><h3 style="margin-top:0">${esc(it.episode_id)} <span class="tag">${esc(it.dataset_id)}</span>${it.synthetic?' <span class="tag">SYNTHETIC</span>':""}</h3>
+  <p style="font-size:17px;margin:4px 0 8px">${it.instruction?esc(it.instruction):'<span class="muted">no instruction recorded</span>'}</p>
+  <p class="muted">verifier says <b class="${oc(it.outcome)}">${esc(it.outcome||"nothing")}</b>${it.category?" · "+esc(it.category):""} · ${it.verified?"verified against gripper/state evidence":"not independently verified"} · quality <span class="${it.quality_status}">${esc(it.quality_status)}</span> · ${it.start_time?new Date(it.start_time*1000).toLocaleString():"time unknown"}</p>
+  ${it.images.length?`<div class="two">${it.images.map(f=>`<figure style="margin:0"><img src="/api/episodes/${encodeURIComponent(it.episode_id)}/images/${encodeURIComponent(f)}" alt="${esc(f)}" onerror="this.alt='image unavailable';this.style.opacity=.3"><figcaption class="muted" style="font-size:11px">${esc(f)}</figcaption></figure>`).join("")}</div>`:'<p class="muted">No camera snapshot for this episode.</p>'}
+  <div class="row" style="margin-top:12px"><button class="act big" id="lb-success" onclick="pick('success')">Success <kbd>s</kbd></button><button class="act big" id="lb-failure" onclick="pick('failure')">Failure <kbd>f</kbd></button><button class="sec big" id="lb-unknown" onclick="pick('unknown')">Unknown <kbd>u</kbd></button></div>
+  <div class="row" id="lcat" style="display:none;margin-top:8px">${S.categories.map((c,i)=>`<button class="sec" id="lc-${c}" onclick="pickCat('${c}')">${c} <kbd>${i+1}</kbd></button>`).join("")}</div>
+  <div class="row" style="margin-top:10px"><input id="lnote" placeholder="note (optional)" size="48"><button class="act" onclick="submitLabel()">Submit <kbd>enter</kbd></button><button class="sec" onclick="state.lq.push(state.lq.shift());R.label($('#main'))">Skip</button><span id="lout" class="muted"></span></div></div>`
+ :`<div class="panel"><h3>Queue empty</h3><p class="muted">Every episode${state.ds?" in this dataset":""} has a human label. Run more trials from Robot lab, or pick another dataset.</p></div>`}
+ ${S.disagreements.length?`<div class="panel"><h4>Human vs verifier disagreements ${cls("MEASURED")}</h4><p class="muted">${esc(a.note)}.</p>${table(S.disagreements.slice(0,30),[["episode_id","episode"],["outcome","human"],["category","human category"],["verifier_outcome","verifier"],["verifier_category","verifier category"],["reviewer","reviewer"],["note","note"]])}</div>`:""}`;state.lmsg=null};
+function pick(o){if(!state.lq||!state.lq.length||!$("#lb-success"))return;state.lsel.outcome=o;if(o!=="failure")state.lsel.category=null;
+ ["success","failure","unknown"].forEach(k=>$("#lb-"+k).classList.toggle("on",k===o));const cat=$("#lcat");cat.style.display=o==="failure"?"":"none";
+ if(o!=="failure")cat.querySelectorAll("button").forEach(b=>b.classList.remove("on"))}
+function pickCat(c){if(state.lsel.outcome!=="failure")pick("failure");state.lsel.category=c;$("#lcat").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.id==="lc-"+c))}
+async function submitLabel(){const it=state.lq&&state.lq[0],out=$("#lout");if(!it||!out||state.lbusy)return;const rev=$("#lrev").value.trim();
+ if(!state.lsel.outcome){out.textContent="pick Success, Failure or Unknown first";return}if(!rev){out.textContent="enter a reviewer id (pseudonym, no e-mail)";$("#lrev").focus();return}
+ try{localStorage.setItem("amperes-reviewer",rev)}catch(e){}
+ state.lbusy=true;out.textContent="saving…";  // one submit in flight; a second Enter must never label the next (unseen) episode
+ try{const r=await post(`/api/episodes/${encodeURIComponent(it.episode_id)}/label`,{outcome:state.lsel.outcome,category:state.lsel.category,note:$("#lnote").value,reviewer:rev});
+  state.lq.shift();state.lsel={outcome:null,category:null};state.lmsg=`Saved ${esc(it.episode_id)}: <b class="${oc(r.outcome)}">${r.outcome}</b>${r.category?" · "+esc(r.category):""} · agrees with verifier: ${r.agrees_with_verifier==null?"not comparable":r.agrees_with_verifier?"yes":"no"}`;state.lbusy=false;R.label($("#main"))}
+ catch(e){out.textContent=e.message;state.lbusy=false}}
+function labelEp(){const d=state.ep,s=d.source_values,i=d.index;const snaps=s.events.filter(e=>e.code==="CAMERA_SNAPSHOT"&&e.message&&!e.message.endsWith(".dep")).map(e=>e.message);
+ state.lq=[{episode_id:d.episode_id,dataset_id:i.dataset_id,outcome:i.outcome,category:i.category,verified:i.verified,quality_status:i.quality_status,start_time:i.start_time,synthetic:i.synthetic,instruction:(s.conditions||{}).instruction,images:snaps.slice(0,2)}];state.lqds=state.ds;go("label")}
+document.addEventListener("keydown",e=>{if(tab!=="label"||e.metaKey||e.ctrlKey||e.altKey||!state.lq||!state.lq.length)return;const tg=e.target.tagName;
+ if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"){if(e.key==="Enter"&&e.target.id==="lnote"){e.preventDefault();submitLabel()}return}
+ const k=e.key.toLowerCase();if(k==="s")pick("success");else if(k==="f")pick("failure");else if(k==="u")pick("unknown");else if(e.key==="Enter"){e.preventDefault();submitLabel()}
+ else if(/^[1-9]$/.test(k)&&state.lsel&&state.lsel.outcome==="failure"&&state.lcats&&state.lcats[+k-1])pickCat(state.lcats[+k-1])});
+
+R.robot=async m=>{clearTimeout(state.robotTimer);const S=await api("/api/robot"),run=S.run||{};const W=S.waypoints||{},envErr=S.envelope&&S.envelope.error;
+ const wrow=n=>{const w=W[n];return `<tr><td><b>${n}</b></td><td>${w?`x ${w.x.toFixed(1)} · y ${w.y.toFixed(1)} · z ${w.z.toFixed(1)} mm`:'<span class="muted">not taught</span>'}</td><td>${w?w._frame:""}</td><td><button class="sec" onclick="teach('${n}')" ${run.running?"disabled":""}>Teach from current pose</button></td></tr>`};
+ const res=(run.results||[]).slice().reverse();
+ m.innerHTML=`<div class="panel row" style="justify-content:space-between"><div><h3 style="margin:0">Robot lab ${cls("MEASURED")} <span class="tag">real arm · supervised</span></h3>
+  <p class="muted" style="margin:6px 0 0">Every move is checked against the taught safety box and step limits before it reaches the robot. A telemetry watchdog and STOP halt the arm mid-move. Default is a dry run.</p></div>
+  <button class="stop" onclick="robotStop()">STOP</button></div>
+ <div class="two"><div class="panel"><h4>1 · Teach three spots</h4><p class="muted">Jog the arm in the Viam app (Control tab) to each spot with the gripper open and positioned to grasp, then press Teach. <b>a</b> and <b>b</b> are the two places the object moves between; <b>home</b> is a safe pose above them.</p>
+  <table><tr><th>spot</th><th>pose</th><th>frame</th><th></th></tr>${["home","a","b"].map(wrow).join("")}</table>
+  <p class="muted">${envErr?esc(envErr):`Safety box: x ${S.envelope.x.map(v=>v.toFixed(0)).join("…")} · y ${S.envelope.y.map(v=>v.toFixed(0)).join("…")} · z ${S.envelope.z.map(v=>v.toFixed(0)).join("…")} mm · max step ${S.envelope.max_step_mm.toFixed(0)} mm`}</p><div id="teachout" class="muted"></div></div>
+ <div class="panel"><h4>2 · Run trials</h4>
+  <div class="row"><label>object <input id="robj" value="wooden block" size="14"></label><label>trials per config <input id="rt" type="number" value="4" min="1" max="50" style="width:70px"></label><label>approach mm <input id="ra" type="number" value="80" style="width:70px"></label>
+  <label>grasp dz mm <input id="rz" type="number" value="0" style="width:70px"></label><label>settle s <input id="rs" type="number" value="0.3" step="0.1" style="width:70px"></label></div>
+  <div class="row" style="margin-top:8px"><label><input id="rab" type="checkbox"> A/B against a fix:</label><input id="rabj" size="40" value='{"name":"lower_grasp","grasp_z_offset_mm":-5}'></div>
+  <div class="row" style="margin-top:10px"><button class="sec" onclick="robotRun(false)" ${run.running||envErr?"disabled":""}>Dry run (no motion)</button></div>
+  <div class="row" style="margin-top:10px"><input id="rack" size="46" placeholder="${esc(S.required_ack)}"><button class="act" onclick="robotRun(true)" ${run.running||envErr?"disabled":""}>Execute on the real arm</button></div>
+  <p class="muted">To move the arm, type exactly: <code>${esc(S.required_ack)}</code></p><div id="runout"></div></div></div>
+ <div class="panel"><h4>Run status</h4><p>${run.running?`<b>${esc(run.phase||"running")}</b> · ${run.execute?"EXECUTING":"dry run"} · ${run.trials_done||0}/${run.trials_total||"?"} trials · ${esc(run.config||"")}`:(run.done?(run.error?`<span class="critical">${esc(run.error)}</span>`:"finished"):"idle")}</p>
+  ${table(res,[["index","trial"],["config","config"],["source","from"],["dest","to"],["outcome","outcome",1],["category","category"],["error","detail"]])}
+  ${run.summary?`<h4>Result by config ${cls("MEASURED")}</h4>${table(Object.entries(run.summary.ab||{}).map(([k,v])=>({k,...v,rate:v.success_rate==null?"n/a":pct(v.success_rate)+" ["+pct(v.ci95[0])+"–"+pct(v.ci95[1])+"]"})),[["k","config"],["n","trials"],["success","success"],["failure","failure"],["timeout","timeout"],["invalid","invalid/stopped"],["rate","success rate (95% CI)"],["note","note"]])}
+   ${run.summary.dataset_id?`<button class="act" onclick="state.ds='${run.summary.dataset_id}';state.ef={};go('episodes')">Open episodes</button> <button class="sec" onclick="state.ds='${run.summary.dataset_id}';go('incidents')">Incidents</button>${state.atlas?` <button class="sec" onclick="atlasSyncTo('${run.summary.dataset_id}','runout')">Sync to MongoDB Atlas</button>`:""}`:""}`:""}</div>`;
+ if(tab==="robot"&&run.running)state.robotTimer=setTimeout(()=>R.robot($("#main")),1000)};
+async function teach(n){$("#teachout").textContent="reading current pose (read-only)…";try{const r=await post("/api/robot/teach/"+n);$("#teachout").textContent=`taught ${n}: x ${r.x.toFixed(1)} y ${r.y.toFixed(1)} z ${r.z.toFixed(1)} (${r.frame})`;setTimeout(()=>R.robot($("#main")),600)}catch(e){$("#teachout").textContent=e.message}}
+async function robotRun(exec){const body={trials:+$("#rt").value,approach_mm:+$("#ra").value,grasp_z_offset_mm:+$("#rz").value,settle_s:+$("#rs").value,execute:exec,ack:exec?$("#rack").value:"",object_name:$("#robj").value||"object"};
+ if($("#rab").checked){try{body.ab=JSON.parse($("#rabj").value)}catch(e){return $("#runout").textContent="A/B JSON is invalid"}}
+ try{await post("/api/robot/run",body);setTimeout(()=>R.robot($("#main")),700)}catch(e){$("#runout").innerHTML=`<p class="critical">${esc(e.message)}</p>`}}
+async function robotStop(){try{await post("/api/robot/stop")}catch(e){};const o=$("#runout");if(o)o.innerHTML='<p class="critical"><b>STOP sent</b>: arm and gripper halted.</p>'}
+async function atlasSyncTo(id,el){$("#"+el).textContent="syncing…";try{const r=await post("/api/atlas/sync/"+id);$("#"+el).textContent="synced to Atlas: "+Object.entries(r.collections).map(([k,v])=>k+" "+(v.upserted+v.matched)).join(", ")}catch(e){$("#"+el).textContent=e.message}}
+function curTheme(){return document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}
+function themeSuffix(){return curTheme()==="dark"?"_dark":""}
+function paintThemeBtn(){const d=curTheme()==="dark";$("#themeBtn").innerHTML=(d?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Light');$("#themeBtn").title="Switch to "+(d?"light":"dark")+" theme"}
+function toggleTheme(){const n=curTheme()==="dark"?"light":"dark";document.documentElement.dataset.theme=n;try{localStorage.setItem("amperes-theme",n)}catch(e){};paintThemeBtn();if(tab==="eval")render()}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(!document.documentElement.dataset.theme){paintThemeBtn();if(tab==="eval")render()}});
+paintThemeBtn();
+api("/api/health").then(h=>{state.atlas=!!h.atlas_configured}).catch(()=>{});
+nav();render();
+</script>
+</body>
+</html>

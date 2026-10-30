@@ -1,0 +1,183 @@
+# Amperes Failure Lab
+
+A local-first tool for robotics data-acquisition and evaluation teams. It answers four questions about recorded
+robot episodes:
+
+1. Which episodes are **usable, suspicious, invalid, or failed-but-valid**, and what is the evidence?
+2. Which failures **recur** across sessions, workcells and configurations?
+3. Which failures can be **reproduced**, and which should become **regression tests**?
+4. Did a proposed change **actually help**, measured on held-out conditions with uncertainty?
+
+It also ships a small MuJoCo pick-and-place simulator. The simulator is a reproducible test bench for the
+reproduce → intervene → verify loop. You don't need it to use ingestion, quality control or triage on your own logs.
+
+> **What the evidence is.** Every number in this repository comes from either MuJoCo simulation or clearly labelled
+> **synthetic** fixtures. Nothing has been tested on customer data or physical-robot logs yet. No customer, including
+> OpenAI, has evaluated, endorsed or requested this product. Workflow time savings have **not** been measured.
+
+## Chess robot toolkit (hackathon build, reusable on any Viam arm)
+
+A Viam arm that plays chess against you, watches your moves, recognises pieces, tidies the board up after the game and
+records every move as audited training data. Each part is a module you can lift into your own robot project:
+
+| Module | What it gives you | Needs |
+|---|---|---|
+| `amperes/integrations/chess_lifecycle.py` | Where every piece is (board and spots beside it), the piece operations for any move (captures, castling, en passant, promotion with a spare queen), game-end rules, and a reset planner that orders pick-and-places so the gripper never touches a neighbour | python-chess; three taught points; your gripper's size |
+| `amperes/integrations/chess_sim.py` | Offline proof: replays plans on a virtual board and counts gripper contacts | Stockfish for engine games |
+| `amperes/integrations/chess_claude_vision.py` | Board reads and piece IDs from any camera image, with a confidence per square; checks a believed position for anomalies | `ANTHROPIC_API_KEY` |
+| `amperes/integrations/chess_vision.py` | Board grid from a depth camera, occupancy and colour per square, the human's move from what changed | an RGB-D camera |
+| `amperes/integrations/chess_robot.py` | The supervised session: Stockfish, pick-and-place through the Viam motion service, camera verification, safety envelope | a Viam arm, gripper and camera |
+| `amperes/integrations/chess_voice.py` | Spoken move commentary (Claude-written lines, canned when offline) | macOS `say` |
+
+```python
+from amperes.integrations import chess_lifecycle as L
+from amperes.integrations.chess_robot import BoardCal
+
+cal = BoardCal.load()                       # a1, h1 and a graveyard spot taught once
+layout = {"e4": "P", "e2": "p", "e1": "K"}  # what is where (from the game record or a recognised board)
+plan = L.plan_reset(cal, layout)            # every operation clean, or flagged as tight
+for op in plan.ops:
+    print(op.symbol, op.src, "->", op.dst, op.note)
+```
+
+Another machine's resource names go in the environment: `AMPERES_ARM`, `AMPERES_GRIPPER`, `AMPERES_MOTION`,
+`AMPERES_CAMERAS` (wrist camera first). The console's chess page is at `/chess`. `python -m amperes.integrations.chess_sim`
+proves a planner change offline. Safety is the same everywhere: dry run unless Execute is on and the operator types the
+acknowledgement, every target checked against a box around the board, slow within 12 cm of it, 5 mm steps near pieces,
+and a telemetry watchdog. Details and measured results: [CHESS](docs/CHESS.md), [DEMO_DAY](docs/DEMO_DAY.md).
+
+## Live on a real robot (Viam, read-only)
+
+```bash
+.venv/bin/python -m amperes.cli viam record --seconds 60
+```
+
+Or use the **Live robot** tab in the UI. This captures read-only telemetry (joints, end pose, motion flags, camera frame
+health and machine status) from the Viam machine in `.env`, segments it into episodes and audits them. Only five read
+methods are callable; anything else raises before reaching the SDK (`tests/test_viam_live.py`).
+
+Measured on the hackathon arm `sfhack1` on 2026-10-29:
+- **Default SDK client:** 51 of 59 arm reads failed, and the camera looked dead.
+- **The recorder's own reconnect handling:** 154 of 155 reads succeeded and 19 of 20 camera frames arrived.
+- **Cause:** the SDK's 1 s health check was tearing down a slow cloud-relayed link (p95 read latency about 1 s). The robot was fine.
+- **Arm model:** not visible to the machine API key; the event page says the provided arms are UFactory xArm or UR.
+
+**MongoDB Atlas (opt-in):** `atlas sync <dataset>` upserts episode status, findings, incidents, events and deterministic
+failure signatures; `atlas similar <episode>` runs Atlas Vector Search across every synced station. It needs
+`MONGODB_URI` in `.env`. `similar <episode>` gives the same search locally, without Atlas.
+
+## What works (verified 2026-10-29 by `scripts/reproduce_all.sh` and 50 passing tests)
+
+| Capability | Evidence |
+|---|---|
+| MuJoCo pick-and-place task + scripted baseline + ground-truth verifier | 5,657 simulated episodes in the reference run |
+| Deterministic failure taxonomy (collision, slippage, grasp, reach, placement, timeout, invalid) | `amperes/sim/taxonomy.py`; `tests/test_sim.py::test_classification` |
+| Exact failure reproduction (closed-loop rerun and open-loop action replay) | 40/40 exact in both modes |
+| Intervention chosen on dev only, then evaluated on 1,000 held-out conditions | baseline 862/1000 → 949/1000; 87 fixed, 0 broken; Δ +8.7 pp, 95% CI [7.0, 10.5]; exact McNemar p ≈ 1.3e-26 |
+| Ablation catches a trade-off | fixed-height alternative: 911/1000, but **broke 33** previously passing conditions |
+| Control arm (unchanged config) | 0 differences, so the harness adds no spurious effects |
+| Canonical episode schema + JSONL and CSV-package importers | malformed records are rejected with field-level errors; the source is never modified |
+| 26 data-quality rules (21 per-episode + 5 dataset-level: completeness, temporal, signal, outcome, dataset) | synthetic corpus: all 15 detectable defect types caught 4/4; 40/40 clean episodes kept; 16/16 failed tasks kept as valid data |
+| Incident grouping, status history, incident → regression case | `amperes/incidents.py`; tests |
+| Usable-data yield with **loss attribution** (each unusable episode traced once to its linked event or finding) | synthetic package: 51 unusable = 43 linked to `CAM_FRAME_DROP` events on wc-B + 8 missing outcome labels |
+| Throughput, availability, MTTA/MTTR, bottlenecks, cross-session correlation | synthetic 3-workcell package: all six planted patterns surfaced (P1's per-session check flagged 5 of the 6 affected sessions) |
+| Human review, counterbalanced workflow-timing study, economic model | instruments built; **no human data collected** |
+| Local API + single-page UI | `python -m amperes.cli serve` |
+
+## Install
+
+Prerequisites: Python 3.11+ (tested 3.12.4), macOS or Linux, no GPU, about 300 MB disk for the full reference run.
+
+```bash
+python3 -m venv .venv
+```
+
+```bash
+.venv/bin/pip install -r requirements.txt
+```
+
+## Reproduce everything (about 2.5 minutes on an Apple M3)
+
+```bash
+scripts/reproduce_all.sh
+```
+
+The script wipes `./amperes_data`. It then runs the tests, the simulator experiment, the detector evaluation, and a
+shadow-mode evaluation of the synthetic operations package. Reports are written to `amperes_data/artifacts/reports/`.
+
+## Try it on your own records
+
+```bash
+.venv/bin/python -m amperes.cli validate /path/to/your/package
+```
+
+```bash
+.venv/bin/python -m amperes.cli shadow /path/to/your/package --name "my sample"
+```
+
+```bash
+.venv/bin/python -m amperes.cli serve
+```
+
+Then open http://127.0.0.1:8765. The UI follows the amperesai.com brand in light and dark themes (system default, toggle in the header). Report charts are written in both themes (`<chart>.png` light, `<chart>_dark.png` dark). Supported formats and required fields are listed in
+[docs/INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md). A tiny worked example is in
+[examples/sample_package](examples/sample_package). To delete an imported dataset and everything derived from it:
+
+```bash
+.venv/bin/python -m amperes.cli delete-dataset <dataset_id> --yes
+```
+
+## Main commands
+
+| Command | Purpose |
+|---|---|
+| `demo` | Simulator steps 1–8: baseline, failures, reproduction, variations, intervention, held-out comparison, regression, export |
+| `validate` / `import` / `shadow` | Schema check only / import + QC + incidents / read-only end-to-end evaluation with a source-unchanged check |
+| `qc <dataset>` | Re-run quality rules on a stored dataset (works on simulator runs too) |
+| `incidents build\|list\|show\|status\|export\|to-regression` | Incident triage |
+| `ops metrics\|bottlenecks\|correlate <dataset…>` | Yield, throughput, reliability, associations |
+| `review add\|report`, `study plan\|start\|finish\|report` | Human review; existing-vs-assisted timing study |
+| `eval-detectors` | Precision/recall on the labelled synthetic defect corpus |
+| `pilot-report <dataset…>` | Pilot readiness report (JSON + Markdown) |
+| `reproduce <episode>`, `regress <suite>` | Replay one episode; rerun a regression suite against a policy config |
+
+## Repository map
+
+```
+amperes/schema.py        canonical episode contract (amperes.episode/1)
+amperes/ingest/          adapter interface, JSONL and CSV-package adapters, import pipeline
+amperes/quality.py       data-quality rule engine and episode status
+amperes/incidents.py     deterministic grouping, status workflow, regression links
+amperes/ops.py           operational events, yield/throughput/reliability, bottlenecks, correlation
+amperes/review.py        human review + counterbalanced workflow study
+amperes/economics.py     assumption-driven value model (refuses to compute without inputs)
+amperes/pilot_report.py  pilot readiness report
+amperes/sim/             MuJoCo env, baseline policy, verifier, taxonomy, variations, reproduction, interventions
+amperes/signatures.py    deterministic failure signatures + similar-episode search
+amperes/integrations/    read-only Viam live recorder; opt-in MongoDB Atlas sync + vector search
+amperes/api.py, ui/      local FastAPI service and single-page UI
+tests/                   50 tests
+docs/                    protocol, architecture, limitations, security, integration, pilot and research documents
+```
+
+## Documentation
+
+- Technical: [ARCHITECTURE](docs/ARCHITECTURE.md), [EXPERIMENT_PROTOCOL](docs/EXPERIMENT_PROTOCOL.md),
+  [LIMITATIONS](docs/LIMITATIONS.md), [DATA_SECURITY](docs/DATA_SECURITY.md), [INTEGRATION_GUIDE](docs/INTEGRATION_GUIDE.md),
+  [IMPLEMENTATION_PLAN](docs/IMPLEMENTATION_PLAN.md), [TECHNICAL_DEMO_SCRIPT](docs/TECHNICAL_DEMO_SCRIPT.md)
+- Phase reports: [PHASE2_GAP_AUDIT](docs/PHASE2_GAP_AUDIT.md), [PHASE2_FINAL_REPORT](docs/PHASE2_FINAL_REPORT.md),
+  [PHASE3_PRODUCT_DECISION](docs/PHASE3_PRODUCT_DECISION.md), [PHASE3_FINAL_REPORT](docs/PHASE3_FINAL_REPORT.md)
+- Hackathon: [HACKATHON_PITCH](docs/HACKATHON_PITCH.md), [OPENAI_PILOT_BRIEF](docs/OPENAI_PILOT_BRIEF.md)
+- Commercial and discovery: [COMPETITIVE_GAP](docs/COMPETITIVE_GAP.md), [OPENAI_RELEVANCE](docs/OPENAI_RELEVANCE.md),
+  [research/OPENAI_PUBLIC_SIGNALS](docs/research/OPENAI_PUBLIC_SIGNALS.md), [PHASE3_PILOT_OFFER](docs/PHASE3_PILOT_OFFER.md),
+  [PILOT_PLAYBOOK](docs/PILOT_PLAYBOOK.md), [PILOT_PROPOSAL](docs/PILOT_PROPOSAL.md),
+  [PILOT_ACCEPTANCE_CRITERIA](docs/PILOT_ACCEPTANCE_CRITERIA.md), [ECONOMIC_VALUE_MODEL](docs/ECONOMIC_VALUE_MODEL.md),
+  [PHASE3_DIFFERENTIATION_TEST](docs/PHASE3_DIFFERENTIATION_TEST.md), [CUSTOMER_DISCOVERY](docs/CUSTOMER_DISCOVERY.md),
+  [PHASE3_CUSTOMER_DISCOVERY](docs/PHASE3_CUSTOMER_DISCOVERY.md)
+
+## Known limitations (short form; full list in [LIMITATIONS](docs/LIMITATIONS.md))
+
+- The simulator is a Cartesian gantry with a parallel gripper, not an articulated arm. Simulator gains say nothing about real robots.
+- Detector scores come from a synthetic corpus written by the same author as the rules, so they are a sanity check, not an accuracy claim.
+- There are no LeRobotDataset, MCAP/rosbag2 or robomimic HDF5 importers yet. Only canonical JSONL and the CSV package are supported.
+- The Viam integration is read-only and sends no robot commands. Live outcomes are `unknown` because monitoring cannot see task success.

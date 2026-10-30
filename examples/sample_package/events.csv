@@ -1,0 +1,6 @@
+event_id,timestamp,end_timestamp,workcell_id,device_id,session_id,episode_id,event_type,event_class,code,message,incident_ref
+,1789999990,,wc-A,arm-01,s-01,,session_start,,,,
+,1790000012,,wc-A,arm-01,s-01,ep-002,fault,hardware_fault,GRIPPER_OVERCURRENT,motor current limit,INC-1
+,1790000015,,wc-A,arm-01,s-01,ep-002,recovery,,GRIPPER_OVERCURRENT,power-cycled,INC-1
+,1790000030,,wc-A,arm-01,s-01,,session_end,,,,
+,1790000031,,wc-A,arm-01,s-01,,coffee_break,,,,

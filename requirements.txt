@@ -1,0 +1,14 @@
+# Versions verified on macOS 27.2 / Apple M3 / Python 3.12.4 (2026-10-29)
+mujoco==3.17.0
+numpy==2.5.4
+pydantic==2.14.2
+fastapi==0.162.0
+uvicorn
+matplotlib==3.11.2
+pytest==9.2.0
+httpx
+pyarrow==26.0.0         # LeRobot v2.1 export (amperes.export_lerobot); 16-bit depth PNGs use pillow (pulled in by matplotlib)
+# Optional integrations (not needed by the core workflow):
+viam-sdk==0.85.1        # read-only live capture (amperes viam record)
+python-dotenv           # reads .env for Viam / Atlas credentials
+pymongo==4.19.0         # opt-in MongoDB Atlas sync + vector search

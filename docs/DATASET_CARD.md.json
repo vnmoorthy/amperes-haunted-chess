@@ -1,0 +1,796 @@
+{
+  "card_version": "amperes.dataset_card/1",
+  "collection": {
+    "capture_notes": [],
+    "episode_adapters": {
+      "amperes.chess_robot@1.0.0": 12,
+      "amperes.lerobot_v3@1.0.0": 17,
+      "amperes.viam_tasks@1.0.0": 5
+    },
+    "import_adapters": {
+      "jsonl@1.0.0": 5
+    },
+    "robot_sessions": {
+      "dry_run": 0,
+      "dry_run_counted_as_real": 0,
+      "dry_run_handling": "dry runs carry synthetic_note 'DRY RUN: no motion was executed' and conditions.dry_run=true; the robot CLI imports them with the SYNTHETIC flag; none of the dry runs here is counted as a real episode",
+      "episodes": 5,
+      "executed": 5,
+      "operator_acknowledgement": "required by viam_control before any executed run; the phrase itself is not stored per episode",
+      "safety_model": [
+        "dry run by default: motion needs --execute plus the typed operator acknowledgement phrase (e-stop in reach)",
+        "taught safety box: targets stay within the taught spots (home, a, b) + 40 mm and the approach height; floor limits apply",
+        "per-move limits: roughly the taught-spot distance, gripper rotation <= 45 deg per move",
+        "collision-aware planning through the machine's motion service (table, walls, ceiling)",
+        "watchdog: telemetry ~3 Hz; 4 s without telemetry during motion stops the arm",
+        "STOP: UI button or Ctrl-C sends stop() to arm and gripper immediately",
+        "a teammate stays at the arm with the e-stop in reach for every executed run (procedure, not code)"
+      ],
+      "safety_refusal_events": 0
+    },
+    "synthetic_notes": []
+  },
+  "composition": {
+    "by_config": {
+      "chess": 12,
+      "not recorded": 17,
+      "scan": 5
+    },
+    "by_failure_category": {
+      "GRASP_FAILURE": 1,
+      "PIECE_NOT_MOVED": 1
+    },
+    "by_outcome": {
+      "failure": 2,
+      "success": 15,
+      "unknown": 17
+    },
+    "by_outcome_provenance": {
+      "amperes_verifier": 17,
+      "unknown": 17
+    },
+    "by_policy": {
+      "scripted_workspace_scan@scan(x=250..450,y=-200..200,z=300,360,420,grid=4x4,settle=0.3)": 2,
+      "scripted_workspace_scan@scan(x=250..450,y=-200..200,z=320,420,grid=3x3,settle=0.3)": 3,
+      "stockfish_plus_scripted_pick_place@1.0.0": 12,
+      "teleoperation@unknown": 17
+    },
+    "by_quality_status": {
+      "infrastructure_error": 2,
+      "invalid_data": 1,
+      "suspicious": 21,
+      "verified_success": 10
+    },
+    "by_task": {
+      "chess_move_real@1.0.0": 12,
+      "pick_up_black_pawn_from_red_a7_and_place_on_blue_a6@lerobot": 1,
+      "pick_up_black_pawn_from_red_b7_and_place_on_blue_b5@lerobot": 1,
+      "pick_up_black_pawn_from_red_c7_and_place_on_blue_c5@lerobot": 3,
+      "pick_up_black_pawn_from_red_d5_and_place_on_blue_d4@lerobot": 3,
+      "pick_up_black_pawn_from_red_d7_and_place_on_blue_d5@lerobot": 4,
+      "pick_up_black_pawn_from_red_e6_and_place_on_blue_e5@lerobot": 1,
+      "pick_up_black_pawn_from_red_e7_and_place_on_blue_e6@lerobot": 2,
+      "pick_up_black_pawn_from_red_g7_and_place_on_blue_g6@lerobot": 1,
+      "pick_up_black_pawn_from_red_h7_and_place_on_blue_h5@lerobot": 1,
+      "workspace_scan_real@1.0.0": 5
+    },
+    "by_verifier": {
+      "gripper_signals": 12,
+      "pose_error": 5
+    },
+    "duration_basis": {
+      "start_end_time": 34
+    },
+    "duration_s": {
+      "max": 87.471,
+      "mean": 22.858,
+      "median": 17.603,
+      "min": 10.467,
+      "n": 34,
+      "total": 777.185
+    },
+    "images": {
+      "by_camera": {
+        "cam": 786,
+        "cam2": 76
+      },
+      "by_mime": {
+        "image/jpeg": 612,
+        "image/vnd.viam.dep": 250
+      },
+      "frame_stream_samples": 338,
+      "snapshot_events": 524
+    },
+    "streams": {
+      "act.gripper": {
+        "declared_rate_hz": [],
+        "dims": [
+          1
+        ],
+        "episodes": 12,
+        "kind": "action",
+        "observed_median_rate_hz": 0.106,
+        "samples": 36,
+        "sources": [
+          "amperes chess pick-place (1=grab, 0=open)"
+        ],
+        "units": []
+      },
+      "act.joint_target": {
+        "declared_rate_hz": [
+          15.0
+        ],
+        "dims": [
+          6
+        ],
+        "episodes": 17,
+        "kind": "action",
+        "observed_median_rate_hz": 15.0,
+        "samples": 3391,
+        "sources": [
+          "lerobot:action"
+        ],
+        "units": [
+          "rad (LeRobot action)"
+        ]
+      },
+      "act.target_pose": {
+        "declared_rate_hz": [],
+        "dims": [
+          7
+        ],
+        "episodes": 17,
+        "kind": "action",
+        "observed_median_rate_hz": 0.69,
+        "samples": 258,
+        "sources": [
+          "amperes chess pick-place",
+          "amperes scripted workspace scan"
+        ],
+        "units": [
+          "mm, orientation-vector, deg"
+        ]
+      },
+      "obs.cam.frame": {
+        "declared_rate_hz": [
+          2.0
+        ],
+        "dims": [
+          1
+        ],
+        "episodes": 2,
+        "kind": "observation",
+        "observed_median_rate_hz": 1.996,
+        "samples": 338,
+        "sources": [
+          "viam:cam.get_images color"
+        ],
+        "units": [
+          "frame index: images/scan-sfhack1-main-20261030T000008-s000_cam_video_<n:05d>.jpg",
+          "frame index: images/scan-sfhack1-main-20261030T000008-s001_cam_video_<n:05d>.jpg"
+        ]
+      },
+      "obs.ee_pose": {
+        "declared_rate_hz": [
+          2.0,
+          3.0
+        ],
+        "dims": [
+          7
+        ],
+        "episodes": 17,
+        "kind": "observation",
+        "observed_median_rate_hz": 3.021,
+        "samples": 1598,
+        "sources": [
+          "viam:arm.get_end_position"
+        ],
+        "units": [
+          "mm, orientation-vector, deg"
+        ]
+      },
+      "obs.ee_pose_settled": {
+        "declared_rate_hz": [],
+        "dims": [
+          7
+        ],
+        "episodes": 5,
+        "kind": "observation",
+        "observed_median_rate_hz": 0.775,
+        "samples": 186,
+        "sources": [
+          "viam:motion.get_pose(world) after settle"
+        ],
+        "units": [
+          "mm, orientation-vector, deg"
+        ]
+      },
+      "obs.joint_pos": {
+        "declared_rate_hz": [
+          2.0,
+          3.0,
+          15.0
+        ],
+        "dims": [
+          6
+        ],
+        "episodes": 34,
+        "kind": "observation",
+        "observed_median_rate_hz": 15.0,
+        "samples": 4989,
+        "sources": [
+          "lerobot:observation.state",
+          "viam:arm.get_joint_positions"
+        ],
+        "units": [
+          "deg",
+          "rad (LeRobot observation.state)"
+        ]
+      },
+      "obs.joint_pos_settled": {
+        "declared_rate_hz": [],
+        "dims": [
+          6
+        ],
+        "episodes": 5,
+        "kind": "observation",
+        "observed_median_rate_hz": 0.775,
+        "samples": 186,
+        "sources": [
+          "viam:arm.get_joint_positions after settle"
+        ],
+        "units": [
+          "deg"
+        ]
+      }
+    },
+    "verified": {
+      "n": 17,
+      "of": 34,
+      "share": 0.5
+    }
+  },
+  "contact": "[contact]",
+  "dataset_ids": [
+    "ds_20261030T015653_a6ecc1",
+    "ds_20261030T000302_48e7a3",
+    "ds_20261029T235741_9996cc",
+    "ds_20261030T014143_4c6dee",
+    "ds_20261030T012532_365bd4"
+  ],
+  "datasets": [
+    {
+      "adapter": "jsonl@1.0.0",
+      "cameras": {
+        "cam": 62,
+        "cam2": 62
+      },
+      "created_at": "2026-10-30T01:56:53+00:00",
+      "dataset_id": "ds_20261030T015653_a6ecc1",
+      "devices": [
+        "arm"
+      ],
+      "embodiments": [
+        "6-joint arm + parallel gripper + wrist RGB-D camera (event-provided)"
+      ],
+      "episode_adapters": {
+        "amperes.chess_robot@1.0.0": 10
+      },
+      "episodes": 10,
+      "kind": "import",
+      "n_records": 26,
+      "n_rejected": 16,
+      "name": "ROBOT chess game 1 (16 plies, 2 captures, castling seen) chess-sfhack1-main-20261030T014536",
+      "note": "real arm vs human; Stockfish chose; wrist-camera move detection and verification",
+      "operators": [
+        "op-onsite"
+      ],
+      "real_episodes": 10,
+      "rule_settings": {
+        "required_metadata": [
+          "task.id"
+        ]
+      },
+      "ruleset_version": "1.0.0",
+      "sessions": 1,
+      "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/chess_20261029T184536",
+      "status": "imported",
+      "success_rate": {
+        "ci95": [
+          0.7225,
+          1.0
+        ],
+        "method": "Wilson 95% interval over outcomes in {success, failure, timeout}",
+        "rate": 1.0,
+        "successes": 10,
+        "valid_outcomes": 10
+      },
+      "synthetic": false,
+      "synthetic_episodes": 0,
+      "time_span": {
+        "end": 1793325230.880757,
+        "end_iso": "2026-10-30T01:53:50+00:00",
+        "hours": 0.129,
+        "start": 1793324767.735446,
+        "start_iso": "2026-10-30T01:46:07+00:00"
+      },
+      "unreadable_artifacts": 0,
+      "workcells": [
+        "sfhack1-main"
+      ]
+    },
+    {
+      "adapter": "jsonl@1.0.0",
+      "cameras": {
+        "cam": 578
+      },
+      "created_at": "2026-10-30T00:03:02+00:00",
+      "dataset_id": "ds_20261030T000302_48e7a3",
+      "devices": [
+        "arm"
+      ],
+      "embodiments": [
+        "6-joint arm + parallel gripper + wrist RGB-D camera (event-provided)"
+      ],
+      "episode_adapters": {
+        "amperes.viam_tasks@1.0.0": 2
+      },
+      "episodes": 2,
+      "kind": "import",
+      "n_records": 460,
+      "n_rejected": 458,
+      "name": "ROBOT workspace scan scan-sfhack1-main-20261030T000008",
+      "note": "real arm workspace scan: RGB-D at known poses, reach accuracy, video",
+      "operators": [
+        "op-onsite"
+      ],
+      "real_episodes": 2,
+      "rule_settings": {
+        "required_metadata": [
+          "task.id"
+        ]
+      },
+      "ruleset_version": "1.0.0",
+      "sessions": 1,
+      "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/scan_20261029T165955",
+      "status": "imported",
+      "success_rate": {
+        "ci95": [
+          0.3424,
+          1.0
+        ],
+        "method": "Wilson 95% interval over outcomes in {success, failure, timeout}",
+        "rate": 1.0,
+        "successes": 2,
+        "valid_outcomes": 2
+      },
+      "synthetic": false,
+      "synthetic_episodes": 0,
+      "time_span": {
+        "end": 1793318580.9696178,
+        "end_iso": "2026-10-30T00:03:00+00:00",
+        "hours": 0.048,
+        "start": 1793318408.867062,
+        "start_iso": "2026-10-30T00:00:08+00:00"
+      },
+      "unreadable_artifacts": 0,
+      "workcells": [
+        "sfhack1-main"
+      ]
+    },
+    {
+      "adapter": "jsonl@1.0.0",
+      "cameras": {
+        "cam": 132
+      },
+      "created_at": "2026-10-29T23:57:41+00:00",
+      "dataset_id": "ds_20261029T235741_9996cc",
+      "devices": [
+        "arm"
+      ],
+      "embodiments": [
+        "6-joint arm + parallel gripper + wrist RGB-D camera (event-provided)"
+      ],
+      "episode_adapters": {
+        "amperes.viam_tasks@1.0.0": 3
+      },
+      "episodes": 3,
+      "kind": "import",
+      "n_records": 69,
+      "n_rejected": 66,
+      "name": "ROBOT workspace scan scan-sfhack1-main-20261029T235546",
+      "note": "real arm workspace scan: RGB-D at known poses, reach accuracy, video",
+      "operators": [
+        "op-onsite"
+      ],
+      "real_episodes": 3,
+      "rule_settings": {
+        "required_metadata": [
+          "task.id"
+        ]
+      },
+      "ruleset_version": "1.0.0",
+      "sessions": 1,
+      "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/scan_20261029T165526",
+      "status": "imported",
+      "success_rate": {
+        "ci95": [
+          0.4385,
+          1.0
+        ],
+        "method": "Wilson 95% interval over outcomes in {success, failure, timeout}",
+        "rate": 1.0,
+        "successes": 3,
+        "valid_outcomes": 3
+      },
+      "synthetic": false,
+      "synthetic_episodes": 0,
+      "time_span": {
+        "end": 1793318259.9941592,
+        "end_iso": "2026-10-29T23:57:39+00:00",
+        "hours": 0.031,
+        "start": 1793318147.8738759,
+        "start_iso": "2026-10-29T23:55:47+00:00"
+      },
+      "unreadable_artifacts": 0,
+      "workcells": [
+        "sfhack1-main"
+      ]
+    },
+    {
+      "adapter": "jsonl@1.0.0",
+      "cameras": {
+        "cam": 14,
+        "cam2": 14
+      },
+      "created_at": "2026-10-30T01:41:43+00:00",
+      "dataset_id": "ds_20261030T014143_4c6dee",
+      "devices": [
+        "arm"
+      ],
+      "embodiments": [
+        "6-joint arm + parallel gripper + wrist RGB-D camera (event-provided)"
+      ],
+      "episode_adapters": {
+        "amperes.chess_robot@1.0.0": 2
+      },
+      "episodes": 2,
+      "kind": "import",
+      "n_records": 5,
+      "n_rejected": 3,
+      "name": "ROBOT chess chess-sfhack1-main-20261030T013851",
+      "note": "real arm chess moves vs a human (Stockfish chooses)",
+      "operators": [
+        "op-onsite"
+      ],
+      "real_episodes": 2,
+      "rule_settings": {
+        "required_metadata": [
+          "task.id"
+        ]
+      },
+      "ruleset_version": "1.0.0",
+      "sessions": 1,
+      "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/chess_20261029T183842",
+      "status": "imported",
+      "success_rate": {
+        "ci95": [
+          0.0,
+          0.6576
+        ],
+        "method": "Wilson 95% interval over outcomes in {success, failure, timeout}",
+        "rate": 0.0,
+        "successes": 0,
+        "valid_outcomes": 2
+      },
+      "synthetic": false,
+      "synthetic_episodes": 0,
+      "time_span": {
+        "end": 1793324401.0335732,
+        "end_iso": "2026-10-30T01:40:01+00:00",
+        "hours": 0.016,
+        "start": 1793324342.2318468,
+        "start_iso": "2026-10-30T01:39:02+00:00"
+      },
+      "unreadable_artifacts": 0,
+      "workcells": [
+        "sfhack1-main"
+      ]
+    },
+    {
+      "adapter": "jsonl@1.0.0",
+      "cameras": {},
+      "created_at": "2026-10-30T01:25:32+00:00",
+      "dataset_id": "ds_20261030T012532_365bd4",
+      "devices": [
+        "unknown (LeRobot v3)"
+      ],
+      "embodiments": [
+        "unknown (LeRobot v3) (LeRobot v3 dataset)"
+      ],
+      "episode_adapters": {
+        "amperes.lerobot_v3@1.0.0": 17
+      },
+      "episodes": 17,
+      "kind": "import",
+      "n_records": 17,
+      "n_rejected": 0,
+      "name": "EXTERNAL LeRobot v3: exidekat/chessbot-lerobot (SO-100 chess teleop)",
+      "note": "third-party LeRobot v3 dataset (unknown (LeRobot v3), 17 episodes, 15.0 fps); outcomes unlabelled",
+      "operators": [
+        "unknown"
+      ],
+      "real_episodes": 17,
+      "rule_settings": {
+        "required_metadata": [
+          "task.id"
+        ]
+      },
+      "ruleset_version": "1.0.0",
+      "sessions": 1,
+      "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/external/exidekat_chessbot-lerobot",
+      "status": "imported",
+      "success_rate": null,
+      "synthetic": false,
+      "synthetic_episodes": 0,
+      "time_span": {
+        "end": 16.8,
+        "end_iso": "1970-01-01T00:00:16+00:00",
+        "hours": 0.005,
+        "start": 0.0,
+        "start_iso": "1970-01-01T00:00:00+00:00"
+      },
+      "unreadable_artifacts": 0,
+      "workcells": [
+        "external"
+      ]
+    }
+  ],
+  "generated_at": "2026-10-30T02:16:45+00:00",
+  "license": "[license]",
+  "provenance": {
+    "amperes_version": "0.3.0",
+    "code_digest": "e7403a5ec0e8f424",
+    "dataset_ids": [
+      "ds_20261030T015653_a6ecc1",
+      "ds_20261030T000302_48e7a3",
+      "ds_20261029T235741_9996cc",
+      "ds_20261030T014143_4c6dee",
+      "ds_20261030T012532_365bd4"
+    ],
+    "dependencies": {
+      "fastapi": "0.162.0",
+      "matplotlib": "3.11.2",
+      "mujoco": "3.17.0",
+      "numpy": "2.5.4",
+      "pydantic": "2.14.2"
+    },
+    "episode_content_digests": 34,
+    "export_timestamp": "2026-10-30T02:16:45+00:00",
+    "git_revision": null,
+    "imports": [
+      {
+        "adapter": "jsonl@1.0.0",
+        "created_at": "2026-10-30T01:56:53+00:00",
+        "dataset_id": "ds_20261030T015653_a6ecc1",
+        "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/chess_20261029T184536"
+      },
+      {
+        "adapter": "jsonl@1.0.0",
+        "created_at": "2026-10-30T00:03:02+00:00",
+        "dataset_id": "ds_20261030T000302_48e7a3",
+        "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/scan_20261029T165955"
+      },
+      {
+        "adapter": "jsonl@1.0.0",
+        "created_at": "2026-10-29T23:57:41+00:00",
+        "dataset_id": "ds_20261029T235741_9996cc",
+        "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/scan_20261029T165526"
+      },
+      {
+        "adapter": "jsonl@1.0.0",
+        "created_at": "2026-10-30T01:41:43+00:00",
+        "dataset_id": "ds_20261030T014143_4c6dee",
+        "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/robot_sessions/chess_20261029T183842"
+      },
+      {
+        "adapter": "jsonl@1.0.0",
+        "created_at": "2026-10-30T01:25:32+00:00",
+        "dataset_id": "ds_20261030T012532_365bd4",
+        "source_uri": "/Users/moorthy/Downloads/Projects/robo hackathon/amperes_data/artifacts/external/exidekat_chessbot-lerobot"
+      }
+    ],
+    "machine": "arm64",
+    "platform": "macOS-27.2-arm64-arm-64bit",
+    "python": "3.12.4",
+    "ruleset_version": "1.0.0"
+  },
+  "quality": {
+    "episodes_with_non_info_findings": 24,
+    "findings": 34,
+    "findings_by_rule": {
+      "C004_truncated": {
+        "by_severity": {
+          "major": 4
+        },
+        "description": "Episode has enough samples and streams cover the declared duration",
+        "episodes": 4,
+        "findings": 4,
+        "needs_review": 0
+      },
+      "C005_missing_outcome": {
+        "by_severity": {
+          "major": 17
+        },
+        "description": "Outcome label present",
+        "episodes": 17,
+        "findings": 17,
+        "needs_review": 0
+      },
+      "O002_label_contradicts_state": {
+        "by_severity": {
+          "critical": 1
+        },
+        "description": "Source outcome label agrees with independent verification",
+        "episodes": 1,
+        "findings": 1,
+        "needs_review": 0
+      },
+      "T003_time_gap": {
+        "by_severity": {
+          "major": 8
+        },
+        "description": "No gaps larger than 3x the declared sampling interval",
+        "episodes": 4,
+        "findings": 8,
+        "needs_review": 0
+      },
+      "T004_rate_mismatch": {
+        "by_severity": {
+          "major": 4
+        },
+        "description": "Median sampling interval matches the declared rate (\u00b120 %)",
+        "episodes": 2,
+        "findings": 4,
+        "needs_review": 0
+      }
+    },
+    "findings_by_severity": {
+      "critical": 1,
+      "major": 33
+    },
+    "incidents": 9,
+    "incidents_by_category": {
+      "C004_truncated": {
+        "by_status": {
+          "open": 3
+        },
+        "episodes": 4,
+        "incidents": 3,
+        "kind": "data_quality"
+      },
+      "C005_missing_outcome": {
+        "by_status": {
+          "open": 1
+        },
+        "episodes": 17,
+        "incidents": 1,
+        "kind": "data_quality"
+      },
+      "O002_label_contradicts_state": {
+        "by_status": {
+          "open": 1
+        },
+        "episodes": 1,
+        "incidents": 1,
+        "kind": "data_quality"
+      },
+      "T003_time_gap": {
+        "by_status": {
+          "open": 2
+        },
+        "episodes": 4,
+        "incidents": 2,
+        "kind": "data_quality"
+      },
+      "T004_rate_mismatch": {
+        "by_status": {
+          "open": 1
+        },
+        "episodes": 2,
+        "incidents": 1,
+        "kind": "data_quality"
+      },
+      "data_recording_failure": {
+        "by_status": {
+          "open": 1
+        },
+        "episodes": 0,
+        "incidents": 1,
+        "kind": "operational_fault"
+      }
+    },
+    "incidents_by_kind": {
+      "data_quality": 8,
+      "operational_fault": 1
+    },
+    "ruleset_version": "1.0.0",
+    "status_meanings": {
+      "infrastructure_error": "explicit recording/harness error events, or a harness-invalid simulator run",
+      "invalid_data": "any deterministic critical finding",
+      "suspicious": "any major finding, or any finding that requires human review",
+      "unknown_outcome": "no outcome, or outcome 'unknown'",
+      "valid_failed_task": "outcome failure/timeout with no serious data defect (still usable data)",
+      "valid_success_unverified": "outcome success asserted only by the source label",
+      "verified_success": "outcome success, independently verified"
+    },
+    "usable_statuses_default": [
+      "verified_success",
+      "valid_success_unverified",
+      "valid_failed_task"
+    ]
+  },
+  "review": {
+    "by_decision_latest": {},
+    "by_rule": {},
+    "by_target_kind": {},
+    "first_review_at": null,
+    "human_labels": {
+      "agreement": {
+        "agree": 0,
+        "ci95": null,
+        "comparable": 0,
+        "note": "latest label per episode vs the stored outcome; 'unknown' on either side is not comparable; timeout counts as failure",
+        "rate": null
+      },
+      "by_category_latest": {},
+      "by_outcome_latest": {},
+      "episodes_labelled": 0,
+      "labels": 0,
+      "reviewers": 0
+    },
+    "last_review_at": null,
+    "reviewers": 0,
+    "reviews": 0,
+    "targets_reviewed": 0
+  },
+  "stats": {
+    "datasets": 5,
+    "episodes": 34,
+    "frames": {
+      "episodes_with_stream": 34,
+      "stream": "obs.joint_pos",
+      "value": 4989
+    },
+    "images": {
+      "found_on_disk": 862,
+      "value": 862
+    },
+    "real_episodes": 34,
+    "success_rate": {
+      "ci95": [
+        0.6566,
+        0.9671
+      ],
+      "method": "Wilson 95% interval over outcomes in {success, failure, timeout}",
+      "rate": 0.8824,
+      "successes": 15,
+      "valid_outcomes": 17
+    },
+    "synthetic_episodes": 0,
+    "unreadable_artifacts": 0,
+    "unreadable_episode_ids": []
+  },
+  "title": "Amperes real-robot data, 29 Oct 2026: xArm6 workspace scans, chess moves, and a third-party LeRobot set",
+  "uses_and_limitations": [
+    "Sample size: 34 episodes, 17 with a valid outcome; the 95% interval on the success rate spans 31 percentage points. Treat rates as directional (n < 20).",
+    "Embodiment coverage: 2 device id(s) (arm, unknown (LeRobot v3)) on 2 workcell(s) (external, sfhack1-main); embodiments 6-joint arm + parallel gripper + wrist RGB-D camera (event-provided), unknown (LeRobot v3) (LeRobot v3 dataset). Results do not transfer across arms or cells.",
+    "Policies are scripted (stockfish_plus_scripted_pick_place@1.0.0, scripted_workspace_scan@scan(x=250..450,y=-200..200,z=320,420,grid=3x3,settle=0.3), scripted_workspace_scan@scan(x=250..450,y=-200..200,z=300,360,420,grid=4x4,settle=0.3)): hand-written motion sequences, not a learned policy. Action streams show what the script commanded, not demonstrations from a human or a trained model.",
+    "Vision: 524 camera snapshot(s) at scripted moments and 338 frame-stream sample(s) (one low-rate video frame per sample); depth files (image/vnd.viam.dep) are raw Viam depth maps, not point clouds.",
+    "Outcome verifier 'gripper_signals' (12 episodes): the gripper's own grab/holding reports; evidence from the actuator under test, not an independent sensor.",
+    "Outcome verifier 'pose_error' (5 episodes): commanded target pose vs the pose the motion service reports after settling (reach error within tol_mm); evidence from the arm's own kinematics/encoders, not an external sensor, so it checks the controller, not what happened in the scene.",
+    "17 episode(s) have unknown outcome provenance (e.g. read-only capture or dry run); they cannot be counted as success or failure.",
+    "Real-arm episodes were executed inside a taught safety box with scripted motion (pick-place a<->b or a workspace scan); the workspace, objects and lighting were not varied.",
+    "Usable-data statuses by default: verified_success, valid_success_unverified, valid_failed_task; 'valid_failed_task' episodes are failures with clean data and are intended for training on failure, not to be discarded."
+  ]
+}

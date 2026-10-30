@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amperes Chess Arena</title>
+<style>
+:root{color-scheme:light;--bg:#f6f6f7;--glow:#ffffff;--panel:#ffffff;--panel2:#f2f2f4;--ink:#0c0c0d;--ink2:#2f3136;--muted:#5f6167;
+ --line:#e4e5e8;--line2:#d3d5d9;--chip:#efeff1;--bad:#b42318;--warn:#8a5a00;--ok:#1a7f4b;
+ --btn:linear-gradient(180deg,#2a2b2f 0%,#0c0c0d 100%);--btn-ink:#f5f5f6;--s5:#2c6db0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;
+ --btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;--s5:#8fb3d9}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;
+ --btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;--s5:#8fb3d9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Inter",Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header b{letter-spacing:.08em;text-transform:uppercase;font-size:12px}header a{color:var(--muted);text-decoration:none;font-size:12px}
+main{max-width:1180px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(300px,440px) 1fr;gap:16px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+button{background:var(--btn);color:var(--btn-ink);border:0;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer}
+button.ghost{background:var(--chip);color:var(--ink);border:1px solid var(--line2)}button:disabled{opacity:.45;cursor:default}
+button.stop{background:#b42318;color:#fff;font-size:18px;padding:14px 22px;width:100%}
+input,select{background:var(--panel2);color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:9px 10px;font:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.muted{color:var(--muted)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+#board img,#board svg{width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.photos img{width:100%;border-radius:8px;border:1px solid var(--line)}
+pre{white-space:pre-wrap;font-size:12px;background:var(--panel2);border:1px solid var(--line);padding:10px;border-radius:10px;max-height:200px;overflow:auto;color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
+.phase{font-size:16px;font-weight:700}.kbd{font-family:ui-monospace,Menlo,monospace;background:var(--chip);padding:1px 5px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<header><b>Amperes · Haunted chess arena 🎃</b><span class="muted">Stockfish chooses, the arm plays, the cameras watch you play back</span>
+ <a href="/">← main console</a><span style="flex:1"></span><button class="ghost" id="theme">Theme</button></header>
+<main>
+ <section>
+  <div class="card"><h3>Board</h3><div id="board"><img id="svg" src="/api/chess/board.svg" alt="board"></div>
+   <div class="row" style="margin-top:10px"><span class="phase" id="phase">no game</span><span class="muted" id="turn"></span></div>
+   <div class="row"><input id="move" placeholder="your move: e4, Nf3, O-O or e2e4" style="flex:1" autocomplete="off">
+    <button id="play">Play</button></div>
+   <div class="row"><button class="ghost" id="robot">Robot moves now</button><button class="ghost" id="resetb">Reset board</button><button class="ghost" id="end">End game + import</button></div>
+   <div class="muted" id="msg"></div>
+   <div id="voice" style="margin-top:8px;font-size:15px;font-style:italic"></div>
+  </div>
+  <div class="card"><h3>Beside the board</h3><div class="muted">Captured pieces and the two spare queens, where the robot put them. The reset brings them back.</div>
+   <div id="slots" class="muted" style="margin-top:6px">—</div>
+   <div class="row"><button class="ghost" id="planb">Show reset plan</button></div><pre id="plan" style="display:none"></pre></div>
+  <div class="card"><button class="stop" id="stop">STOP THE ARM</button><div class="muted" style="margin-top:6px">Sends stop() to the arm and gripper immediately, even mid-move. The e-stop on the arm is still the real one.</div></div>
+ </section>
+ <section>
+  <div class="card"><h3>New game</h3>
+   <div class="row">Robot plays <select id="color"><option value="black">black (you start)</option><option value="white">white (robot starts)</option><option value="both">both sides (robot vs robot)</option></select>
+    Skill <input id="skill" type="number" min="0" max="20" value="5" style="width:70px"> Think <input id="think" type="number" step="0.1" min="0.05" max="10" value="0.5" style="width:80px"> s</div>
+   <div class="row"><label><input type="checkbox" id="voice_on" checked> Spooky voice 🎃</label><label><input type="checkbox" id="auto_reset"> Reset the board when the game ends</label>
+    Stop after <input id="max_plies" type="number" min="2" max="600" placeholder="∞" style="width:70px"> half-moves</div>
+   <div class="row"><label><input type="checkbox" id="execute"> Execute (move the real arm)</label></div>
+   <div class="row"><input id="ack" placeholder="operator acknowledgement (required to execute)" style="flex:1"></div>
+   <div class="row"><button id="new">Start game</button><span class="muted" id="cal_summary"></span></div>
+  </div>
+  <div class="card"><h3>Robot's last move</h3><div id="last" class="muted">—</div><div class="photos" id="photos"></div></div>
+  <div class="card"><h3>Piece operations (episodes)</h3><table id="ops"><thead><tr><th>#</th><th>op</th><th>piece</th><th>from→to</th><th>outcome</th></tr></thead><tbody></tbody></table></div>
+  <div class="card"><h3>Calibration</h3>
+   <div class="muted">Jog the arm in the Viam app with the gripper <b>open and turned 45°</b>, fingertips touching the board at the centre of the square, then teach.</div>
+   <div class="row"><button class="ghost" data-teach="a1">Teach a1</button><button class="ghost" data-teach="h1">Teach h1</button><button class="ghost" data-teach="graveyard">Teach graveyard</button></div>
+   <div class="row">King height <input id="king" type="number" min="30" max="200" value="95" style="width:80px"> mm · grasp at <input id="grip" type="number" step="0.05" min="0.2" max="0.8" value="0.45" style="width:80px"> of piece height <button class="ghost" id="cal">Save</button></div>
+   <pre id="calinfo">loading…</pre>
+  </div>
+  <div class="card"><h3>Log</h3><pre id="log"></pre></div>
+ </section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const theme=localStorage.getItem('amperes-theme');if(theme)document.documentElement.dataset.theme=theme;
+$('#theme').onclick=()=>{const d=document.documentElement;const next=(d.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))==='dark'?'light':'dark';d.dataset.theme=next;localStorage.setItem('amperes-theme',next)};
+let busy=false;
+async function api(path,body,method){const r=await fetch(path,{method:method||(body?'POST':'GET'),headers:{'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.detail||r.statusText);return j}
+function log(m){const el=$('#log');el.textContent=(new Date().toLocaleTimeString()+' '+m+'\n'+el.textContent).slice(0,6000)}
+function say(m,cls){$('#msg').className=cls||'muted';$('#msg').textContent=m}
+function render(s){
+  const cal=s.calibration;$('#calinfo').textContent=cal.ok?cal.description+'\n'+JSON.stringify(s.taught):cal.error;
+  $('#cal_summary').textContent=cal.ok?'board calibrated':'calibrate the board first';
+  if(cal.ok){$('#king').value=cal.king_height_mm;$('#grip').value=cal.grip_fraction}
+  $('#ack').placeholder=s.required_ack;
+  const g=s.game;$('#svg').src='/api/chess/board.svg?t='+Date.now();
+  if(!g){$('#phase').textContent='no game';$('#turn').textContent='';return}
+  $('#phase').textContent=g.phase+(g.execute?'':' (dry run)');$('#phase').className='phase '+(g.phase==='robot moving'?'warn':g.error?'bad':'');
+  $('#turn').textContent=`move ${g.move_number} · ${g.turn} to move · robot is ${g.robot}`+(g.check?' · CHECK':'')+(g.game_over?' · GAME OVER '+g.result:'');
+  if(g.error)say(g.error,'bad');
+  const lm=g.last_move;if(lm){$('#last').textContent=`${lm.san} (${lm.uci}) · ${lm.ops.map(o=>o.kind+' '+o.symbol+' '+o.src+'→'+o.dst).join('; ')} · executed_ok=${lm.executed_ok}`;
+    const ph=[...(lm.images_before||[]),...(lm.images_after||[])].filter(f=>f.endsWith('.jpg'));$('#photos').innerHTML=ph.map(f=>`<img src="/api/chess/images/${f}" alt="${f}">`).join('')}
+  $('#ops tbody').innerHTML=(g.trials||[]).map(t=>`<tr><td>${t.index}</td><td>${t.op}</td><td>${t.piece}</td><td>${t.src}→${t.dst}</td><td class="${t.outcome==='success'?'ok':t.outcome==='unknown'?'muted':'bad'}">${t.outcome}${t.category?' '+t.category:''}${t.error?' · '+t.error:''}</td></tr>`).join('');
+  if(g.summary)say('imported: dataset '+g.summary.dataset_id+' · '+JSON.stringify(g.summary.outcomes),'ok');
+  $('#play').disabled=g.phase!=='your move';
+  $('#voice').textContent=g.voice_line?'👻 “'+g.voice_line.line+'”':'';
+  if(g.verdict)$('#turn').textContent+=' · '+g.verdict.reason+' '+g.verdict.result;
+  if(g.reset){const rs=g.reset;$('#msg').textContent=`reset: ${rs.done}/${rs.plan.ops} operations`+(rs.failed?` · stopped at ${rs.failed.op.symbol} ${rs.failed.op.src}→${rs.failed.op.dst} (${rs.failed.category||rs.failed.error})`:'')+(rs.plan.missing&&Object.keys(rs.plan.missing).length?' · missing: '+JSON.stringify(rs.plan.missing):'')}
+  const w=g.world;$('#slots').textContent=w?(Object.entries(w.off_board).map(([k,v])=>`${v} on ${k}`).join(' · ')||'nothing beside the board')+(w.unknown.length?' · taken by hand: '+w.unknown.join(' '):''):'not tracked';
+  $('#resetb').disabled=!w||['robot moving','watching for your move','resetting'].includes(g.phase);
+}
+async function refresh(){try{render(await api('/api/chess'))}catch(e){say(e.message,'bad')}}
+$('#new').onclick=async()=>{try{const mp=$('#max_plies').value;const r=await api('/api/chess/new',{color:$('#color').value,skill:+$('#skill').value,think_s:+$('#think').value,execute:$('#execute').checked,ack:$('#ack').value,voice:$('#voice_on').checked,auto_reset:$('#auto_reset').checked,max_plies:mp?+mp:null});log('game started '+(r.execute?'EXECUTING':'dry run')+' · '+r.board);say('connecting to the arm…')}catch(e){say(e.message,'bad')}refresh()};
+$('#resetb').onclick=async()=>{try{await api('/api/chess/reset',{});log('reset started');say('putting the pieces back…')}catch(e){say(e.message,'bad')}refresh()};
+$('#planb').onclick=async()=>{try{const r=await api('/api/chess/reset/plan');const p=r.plan;const el=$('#plan');el.style.display='block';el.textContent=`${p.ops} operations`+(p.tight?`, ${p.tight} tight`:'')+(Object.keys(p.missing).length?`, missing ${JSON.stringify(p.missing)}`:'')+'\n'+p.ops_list.map((o,i)=>`${i+1}. ${o.symbol} ${o.src} → ${o.dst}${o.note?'  ('+o.note+')':''}`).join('\n')}catch(e){say(e.message,'bad')}};
+$('#play').onclick=async()=>{const m=$('#move').value.trim();if(!m)return;try{const r=await api('/api/chess/human',{move:m});log('you: '+r.accepted);$('#move').value='';say('robot is thinking / moving…')}catch(e){say(e.message,'bad')}refresh()};
+$('#move').addEventListener('keydown',e=>{if(e.key==='Enter')$('#play').click()});
+$('#robot').onclick=async()=>{try{await api('/api/chess/robot',{})}catch(e){say(e.message,'bad')}refresh()};
+$('#end').onclick=async()=>{try{say('ending and importing…');const r=await api('/api/chess/end',{});log('ended: '+JSON.stringify(r.summary||{}))}catch(e){say(e.message,'bad')}refresh()};
+$('#stop').onclick=async()=>{try{await api('/api/chess/stop',{});log('STOP sent')}catch(e){say(e.message,'bad')}refresh()};
+document.querySelectorAll('[data-teach]').forEach(b=>b.onclick=async()=>{try{const r=await api('/api/chess/teach/'+b.dataset.teach,{});log('taught '+r.name+' at '+[r.x,r.y,r.z].map(v=>v.toFixed(1)).join(', '))}catch(e){say(e.message,'bad')}refresh()});
+$('#cal').onclick=async()=>{try{await api('/api/chess/cal',{king_height_mm:+$('#king').value,grip_fraction:+$('#grip').value});log('calibration saved')}catch(e){say(e.message,'bad')}refresh()};
+refresh();setInterval(refresh,2000);
+</script>
+</body>
+</html>
