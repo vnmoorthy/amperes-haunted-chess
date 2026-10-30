@@ -15,6 +15,8 @@
 <img alt="data" src="https://img.shields.io/badge/export-LeRobot-yellow">
 </p>
 
+📽️ **Pitch deck:** [deck/Amperes_Haunted_Chess.pptx](deck/Amperes_Haunted_Chess.pptx) ([PDF](deck/Amperes_Haunted_Chess.pdf)) · **3-minute storyboard:** [docs/STORYBOARD.md](docs/STORYBOARD.md)
+
 Built in 48 hours at the Oct 2026 SF robotics hackathon on a real UFactory xArm6 with a gripper, a wrist RealSense
 D435 and a second RealSense on a tripod. Everything below ran on that arm.
 
