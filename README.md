@@ -1,3 +1,128 @@
+<p align="center"><img src="assets/hero.png" alt="Amperes Haunted Chess: a robot arm playing chess on a real board" width="100%"></p>
+
+<h1 align="center">Amperes · Haunted Chess 🎃</h1>
+
+<p align="center">
+<b>A robot arm that sees your move, answers with Stockfish, taunts you in a spooky voice,<br>sets the board up by itself, and turns every move into audited robot-learning data.</b>
+</p>
+
+<p align="center">
+<img alt="tests" src="https://img.shields.io/badge/tests-130%20passing-brightgreen">
+<img alt="python" src="https://img.shields.io/badge/python-3.12-blue">
+<img alt="viam" src="https://img.shields.io/badge/robot-Viam%20xArm6-orange">
+<img alt="engine" src="https://img.shields.io/badge/engine-Stockfish-lightgrey">
+<img alt="vision" src="https://img.shields.io/badge/vision-RealSense%20%2B%20Claude-purple">
+<img alt="data" src="https://img.shields.io/badge/export-LeRobot-yellow">
+</p>
+
+Built in 48 hours at the Oct 2026 SF robotics hackathon on a real UFactory xArm6 with a gripper, a wrist RealSense
+D435 and a second RealSense on a tripod. Everything below ran on that arm.
+
+## What it does
+
+| | |
+|---|---|
+| ♟️ **Plays you** | Stockfish picks the move; the arm picks the piece up and puts it down, fast through the air, slow and gentle in the last 6 cm. |
+| 👁️ **Sees your move** | The wrist depth camera locks onto the printed grid and finds the legal move that explains what changed. No typing. Castling and captures included. |
+| ✅ **Checks itself** | A grip that closes on nothing is retried at once. A move the camera does not confirm is retried, never recorded as played. |
+| 🧩 **Sets up the board** | Six close views over the board and 10 cm around it; every piece located in arm coordinates, named by Claude, cross-checked by its height; a planner puts all 32 pieces home in an order the gripper can manage. |
+| 🎙️ **Haunts you** | Claude writes a one-line taunt for each move; the Mac speaks it in a creaky voice. Checkmate is sung. |
+| ✋ **Respects hands** | Before every descent the camera checks under the gripper; anything taller than a chess piece makes it hold still. |
+| 📊 **Audits its data** | Every pick-and-place is an episode with a status and evidence, exportable to LeRobot and synced to MongoDB Atlas. |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Robot["Viam machine (sfhack1)"]
+    ARM[xArm6 + G2 gripper]
+    CAM[Wrist RealSense D435]
+    CAM2[Tripod RealSense]
+    MOT[Motion service + obstacles]
+  end
+  subgraph Brain["Amperes (Python, this repo)"]
+    SESS[chess_robot<br/>session, safety envelope,<br/>retries, hand guard]
+    VIS[chess_vision<br/>grid lock, occupancy,<br/>human-move detection]
+    SURV[chess_survey<br/>6-view scan, 3D blobs,<br/>camera-bias correction]
+    PLAN[chess_lifecycle<br/>slots, promotion,<br/>clearance-aware reset planner]
+    ARR[chess_arrange<br/>look-plan-move loop]
+    ENG[Stockfish]
+    CL[Claude vision + voice]
+    DATA[Amperes audit<br/>episodes, QC, LeRobot, Atlas]
+  end
+  UI[Web console /chess]
+  CAM --> VIS --> SESS
+  CAM --> SURV --> ARR
+  CAM2 --> CL
+  SURV --> CL
+  ARR --> PLAN --> SESS
+  ENG --> SESS
+  SESS --> MOT --> ARM
+  SESS --> DATA
+  UI <--> SESS
+  CL --> UI
+```
+
+**One robot turn:** look from above → lock the printed grid → wait for a legal move that explains the change (two
+frames agree) → Stockfish (top-5, the hand prefers clean moves) → pick-and-place with immediate grip retries →
+camera confirms the move → commit, speak, record the episode.
+
+## Run the demo (10 minutes)
+
+```bash
+git clone https://github.com/vnmoorthy/amperes-haunted-chess && cd amperes-haunted-chess
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
+cp .env.example .env    # VIAM_API_KEY, VIAM_API_KEY_ID, VIAM_MACHINE_ADDRESS, optional ANTHROPIC_API_KEY
+.venv/bin/python -m amperes.cli serve --port 8765        # open http://127.0.0.1:8765/chess
+```
+
+1. **Set up the board by itself** (2–4 min): `python -m amperes.integrations.chess_arrange --ack "<operator phrase>"`
+2. **Play** (5 min): on `/chess` pick *Robot plays white*, tick *Execute* and *Spooky voice*, type the operator
+   phrase, *Start game*. Play Black by hand; the robot sees each move and replies.
+3. **Show the data** (1 min): *End game + import* → the moves appear as episodes in the console, with QC findings.
+
+Offline, with no robot: `python -m amperes.integrations.chess_sim --scrambles 50 --games 5` and `pytest`.
+
+## Measured on the event arm
+
+| | |
+|---|---|
+| Robot moves confirmed by the camera, game 1 (29 Oct) | 10 of 10 |
+| Pick-and-places in a row after the camera-bias fix (30 Oct) | 14 of 14 |
+| Survey position error, after the fitted correction | 4.5 mm mean (was ~15 mm) |
+| Board-calibration offset measured against the printed grid | ~3 mm (corrected) |
+| Reset planner, simulated scrambles of all 34 pieces | 600 of 600, zero gripper contact |
+| Workspace scans, commanded poses | 186 poses, 0.34 mm max error |
+| Tests | 130 passing |
+
+## Reuse it on your robot
+
+| Module | Gives you |
+|---|---|
+| `chess_lifecycle` | Physical layout, piece ops for any move (captures, castling, en passant, promotion with a spare queen), game end, clearance-aware reset planner. Pure Python. |
+| `chess_survey` | Multi-view scan → every object in arm coordinates, with a fitted camera correction. |
+| `chess_vision` | Board grid from a depth camera; human-move detection. |
+| `chess_claude_vision` | Board reads and piece IDs from any image, with confidences. |
+| `chess_robot` | Supervised Viam session: envelope, speed profile, retries, hand guard, camera verification. |
+| `amperes` (rest) | Episode QC, incidents, LeRobot import/export, Atlas sync for any robot's data. |
+
+Resource names come from `AMPERES_ARM`, `AMPERES_GRIPPER`, `AMPERES_MOTION`, `AMPERES_CAMERAS`.
+
+## Safety
+
+Dry run unless *Execute* is on and the operator types the acknowledgement · every target checked against a box around
+the board · slow and gentle within 6 cm of the board, pieces released 3 mm above it · telemetry watchdog stops the
+arm when data stops · STOP works mid-move · the arm's own collision detection stays at its configured sensitivity ·
+hand guard before every descent.
+
+## Honest limitations
+
+It cannot stand up a fallen piece (a top-down parallel gripper can't). Telling a rook from a pawn from straight above
+is hard; the robot remembers what it placed and a person can correct a label in one line. Venue Wi-Fi drops; the
+robot reconnects and resumes.
+
+---
+
 # Amperes Failure Lab
 
 A local-first tool for robotics data-acquisition and evaluation teams. It answers four questions about recorded
