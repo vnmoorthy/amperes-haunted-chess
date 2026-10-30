@@ -100,11 +100,13 @@ def scan_stop():
 class ChessRunner:
     """One thread + event loop owning the robot connection; commands arrive through a queue."""
 
-    def __init__(self, spec, cal, game, engine, voice: bool = False, auto_reset: bool = False, max_plies: int | None = None):
+    def __init__(self, spec, cal, game, engine, voice: bool = False, auto_reset: bool = False, max_plies: int | None = None,
+                 takeover_s: float | None = None):
         from amperes.integrations import chess_lifecycle as L
 
         self.spec, self.cal, self.game, self.engine = spec, cal, game, engine
         self.voice, self.auto_reset = voice, auto_reset
+        self.takeover_s = takeover_s  # the person has not moved within this long: the robot plays their side too
         self.adjudicator = L.Adjudicator(ply_cap=max_plies)
         self.stop_event = threading.Event()
         self.state: dict[str, Any] = {"phase": "connecting", "error": None, "summary": None, "connected": False}
@@ -144,6 +146,9 @@ class ChessRunner:
                     continue
                 if cmd == "robot_move":
                     self.state["phase"] = "robot moving"
+                    colour = self.game.robot_color
+                    if colour is not None and self.game.board.turn != colour:
+                        self.game.robot_color = None  # taking over the person's side for this one move
                     try:
                         await self.sess.play_robot_move()
                     except Exception as exc:
@@ -153,11 +158,13 @@ class ChessRunner:
                         self.state["robot_error"] = traceback.format_exc()[-1500:]
                         self.state["phase"] = "stopped"
                         continue
+                    finally:
+                        self.game.robot_color = colour
                     self.state["phase"] = "stopped" if self.stop_event.is_set() else "game over" if self._game_over() else "your move"
                     if self.state["phase"] == "game over":
                         self._on_game_over()
                     if self.spec.auto and self.state["phase"] == "your move":
-                        if both:
+                        if both or self.game.board.turn == self.game.robot_color:
                             self.state["phase"] = "robot to move"
                             await asyncio.sleep(1.0)
                             self.queue.put_nowait("robot_move")
@@ -168,7 +175,7 @@ class ChessRunner:
                     self.state["phase"] = "watching for your move"
                     seen, failed = None, False
                     try:
-                        seen = await self.sess.watch_human_move(timeout_s=900, log=self._log)
+                        seen = await self.sess.watch_human_move(timeout_s=self.takeover_s or 900, log=self._log)
                     except Exception as exc:
                         failed, self.state["error"] = True, f"{type(exc).__name__}: {exc}"
                         self.state["watch_failures"] = self.state.get("watch_failures", 0) + 1
@@ -181,7 +188,11 @@ class ChessRunner:
                     elif seen is None:
                         # a move typed in the console ends the watch, and its reply is already queued; otherwise the move was
                         # not seen within the timeout: type it, or press Robot moves after fixing the board
-                        if self.game.board.turn != self.game.robot_color:
+                        if self.game.board.turn != self.game.robot_color and self.takeover_s and not self.stop_event.is_set():
+                            self._log(f"no move from you in {self.takeover_s:.0f} s: the robot plays your side")
+                            self.state["phase"] = "robot to move"
+                            self.queue.put_nowait("robot_move")
+                        elif self.game.board.turn != self.game.robot_color:
                             self.state["phase"] = "your move"
                     else:
                         if self.voice and self.game.history:
@@ -322,6 +333,7 @@ class ChessNewReq(BaseModel):
     voice: bool = True  # call out every move through the Mac's speaker
     auto_reset: bool = False  # when the game ends, put every piece back on its own
     max_plies: int | None = Field(None, ge=2, le=600)  # stop robot-vs-robot games after this many half-moves
+    takeover_s: float | None = Field(None, ge=5, le=600)  # no move from the person this long: the robot plays their side
 
 
 def _new_world(cal, fen: str | None):
@@ -435,7 +447,8 @@ def chess_new(req: ChessNewReq):
     except ValueError as exc:
         engine.close()
         raise HTTPException(400, f"bad FEN: {exc}")
-    CHESS["runner"] = ChessRunner(spec, cal, game, engine, voice=req.voice, auto_reset=req.auto_reset, max_plies=req.max_plies)
+    CHESS["runner"] = ChessRunner(spec, cal, game, engine, voice=req.voice, auto_reset=req.auto_reset, max_plies=req.max_plies,
+                                    takeover_s=req.takeover_s)
     return {"started": True, "execute": req.execute, "robot": req.color, "out_dir": str(out), "board": cal.describe(),
             "tracking": world.to_dict() if world is not None else None}
 
