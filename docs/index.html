@@ -1,49 +1,606 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Amperes · Haunted Chess</title>
-<meta name="description" content="A robot arm that sees your move, answers with Stockfish, taunts you, sets up the board itself, and audits every move as training data.">
-<meta property="og:image" content="assets/hero.png">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amperes Failure Lab</title>
+<meta name="description" content="Amperes Failure Lab records every robot attempt, labels each failure, traces it to a root cause and verifies the fix. Proved on a real UFactory xArm6 that plays chess.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vnmoorthy.github.io/amperes-haunted-chess/">
+<meta property="og:title" content="Amperes Failure Lab">
+<meta property="og:description" content="Every robot failure, caught, explained and fixed. Local-first failure analysis for robot manipulation, proved on a real xArm6 that plays chess.">
+<meta property="og:image" content="https://vnmoorthy.github.io/amperes-haunted-chess/assets/hero.png">
+<meta property="og:image:width" content="2400">
+<meta property="og:image:height" content="1200">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Amperes Failure Lab">
+<meta name="twitter:description" content="Every robot failure, caught, explained and fixed. Local-first failure analysis for robot manipulation, proved on a real xArm6 that plays chess.">
+<meta name="twitter:image" content="https://vnmoorthy.github.io/amperes-haunted-chess/assets/hero.png">
+<meta name="theme-color" content="#000000">
+<script>try{var t=localStorage.getItem("amperes-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}
+/* Images keep their frame if a file is missing: try the data-fallback file once, then show the alt text in the frame. */
+function imgFail(i){var f=i.getAttribute("data-fallback");
+ if(f){i.removeAttribute("data-fallback");var a=i.getAttribute("data-fallback-alt");if(a)i.alt=a;
+  var c=i.getAttribute("data-fallback-cap"),fig=i.closest("figure"),cap=fig&&fig.querySelector("figcaption");if(c&&cap)cap.innerHTML=c;
+  var l=i.closest("a");if(l)l.href=f;i.src=f;return}
+ var fr=i.closest(".frame");if(fr){fr.dataset.alt=i.alt;fr.classList.add("missing")}}
+/* The hero frame takes the shape of whatever crop it shows, so nothing is cut off. */
+function fitFrame(i){var r=i.naturalWidth/i.naturalHeight,fr=i.closest(".frame");if(fr&&r>=.75&&r<=2.4)fr.style.setProperty("--ar",r.toFixed(4))}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Cpath d='M17 47 32 15l15 32M23.5 36h17' fill='none' stroke='%23d8d9dc' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#1a1026;--card:#2b1b3d;--ink:#f7f2ea;--muted:#c9beda;--accent:#ff8c00}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-a{color:var(--accent)}.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-header{padding:28px 0}header b{color:var(--accent);letter-spacing:.2em}
-.hero img{width:100%;border-radius:14px;display:block}
-h1{font:700 clamp(36px,6vw,64px)/1.1 Cambria,Georgia,serif;margin:28px 0 12px}h2{font:700 30px Cambria,Georgia,serif;margin:56px 0 16px}
-.lead{color:var(--muted);font-size:20px;max-width:760px}
-.btns{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}.btn{background:var(--accent);color:#1a1026;padding:12px 20px;border-radius:999px;font-weight:700;text-decoration:none}.btn.ghost{background:none;color:var(--accent);border:2px solid var(--accent)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.card{background:var(--card);border-radius:14px;padding:20px}.card h3{margin:0 0 6px;font-size:19px}.card p{margin:0;color:var(--muted);font-size:15px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}.stat{background:var(--card);border-radius:14px;padding:18px}.stat b{display:block;font:700 40px Cambria,Georgia,serif;color:var(--accent)}.stat span{color:var(--muted);font-size:14px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.two img{width:100%;border-radius:12px}@media(max-width:700px){.two{grid-template-columns:1fr}}
-ol li{margin:8px 0}code{background:var(--card);padding:2px 6px;border-radius:6px}footer{color:var(--muted);padding:56px 0 40px;font-size:14px}
-</style></head><body><div class="wrap">
-<header><b>🎃 AMPERES</b></header>
-<div class="hero"><img src="assets/hero.png" alt="The robot arm over the chessboard, and its own labelled overhead view"></div>
-<h1>Haunted Chess</h1>
-<p class="lead">A Viam robot arm that sees your move, answers with Stockfish, taunts you in a spooky voice, sets the board up by itself, and turns every move into audited robot-learning data. Built and run on a real xArm6 at the Viam × MongoDB Robot Hackathon, October 2026.</p>
-<div class="btns"><a class="btn" href="https://github.com/vnmoorthy/amperes-haunted-chess">View the code</a><a class="btn ghost" href="assets/Amperes_Haunted_Chess.pdf">Pitch deck (PDF)</a><a class="btn ghost" href="https://github.com/vnmoorthy/amperes-haunted-chess#run-the-demo-10-minutes">Run the demo</a></div>
-<h2>What it does</h2>
-<div class="grid">
-<div class="card"><h3>♟️ Plays you</h3><p>Stockfish picks the move; the arm makes it, fast through the air and gentle in the last 6 cm.</p></div>
-<div class="card"><h3>👁️ Sees your move</h3><p>The wrist depth camera locks the printed grid and finds the legal move you made. No typing.</p></div>
-<div class="card"><h3>✅ Checks itself</h3><p>A grip on air is retried at once; a move the camera didn't see is never recorded.</p></div>
-<div class="card"><h3>🧩 Sets up the board</h3><p>Six close views, every piece located and named, a planner that lifts tall pieces aside like a person.</p></div>
-<div class="card"><h3>🎙️ Haunts you</h3><p>Claude writes a taunt for every move; the voice reads it while the arm moves.</p></div>
-<div class="card"><h3>📊 Audits its data</h3><p>Every pick-and-place is an episode with a verdict and evidence, exported to LeRobot and MongoDB Atlas.</p></div>
+/* Amperes brand, same tokens as the Failure Lab console (amperes/ui/index.html): black and silver monochrome,
+   system UI type, wide-tracked light wordmark. Colour is used only for status. */
+:root{color-scheme:light;--bg:#f6f6f7;--glow:#ffffff;--panel:#ffffff;--panel2:#f2f2f4;--ink:#0c0c0d;--ink2:#2f3136;--muted:#5f6167;
+ --line:#e4e5e8;--line2:#d3d5d9;--chip:#efeff1;--header:rgba(246,246,247,.86);--bad:#b42318;--warn:#8a5a00;--ok:#1a7f4b;
+ --silver:linear-gradient(180deg,#3a3c41 0%,#1d1e21 52%,#5a5c61 100%);--btn:linear-gradient(180deg,#2a2b2f 0%,#0c0c0d 100%);--btn-ink:#f5f5f6;
+ --sheen:rgba(255,255,255,.75);--logo-stroke:#d3d5d9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--header:rgba(0,0,0,.82);--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;
+ --silver:linear-gradient(180deg,#f5f5f6 0%,#cdced1 48%,#84868b 100%);--btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;
+ --sheen:rgba(255,255,255,.9);--logo-stroke:#2a2b2f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#000;--glow:#0c0c0d;--panel:#0a0a0b;--panel2:#111214;--ink:#e6e7ea;--ink2:#cdced1;
+ --muted:#7d7f84;--line:#1f2023;--line2:#2a2b2f;--chip:#141518;--header:rgba(0,0,0,.82);--bad:#ef8a80;--warn:#d9b26a;--ok:#86c9a0;
+ --silver:linear-gradient(180deg,#f5f5f6 0%,#cdced1 48%,#84868b 100%);--btn:linear-gradient(180deg,#f5f5f6 0%,#cdced1 100%);--btn-ink:#000;
+ --sheen:rgba(255,255,255,.9);--logo-stroke:#2a2b2f}
+
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+ color:var(--ink);background:var(--bg) radial-gradient(ellipse 80% 50% at 50% 0%,var(--glow) 0%,var(--bg) 70%) no-repeat;overflow-x:hidden}
+a{color:var(--ink2);text-underline-offset:3px;text-decoration-color:var(--line2)}
+a:hover{text-decoration-color:currentColor}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{font-size:.88em;background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+img{max-width:100%}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:10;background:var(--header);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:24px;min-height:64px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;flex:none}
+.brand svg{width:30px;height:30px;flex:none}
+.wordmark{position:relative;display:block;font-weight:300;font-size:17px;line-height:1;letter-spacing:.36em;text-transform:uppercase;white-space:nowrap;margin:0;
+ background-image:var(--silver);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--ink)}
+.wordmark::after{content:attr(data-text);position:absolute;inset:0;background-image:linear-gradient(100deg,rgba(255,255,255,0) 42%,var(--sheen) 50%,rgba(255,255,255,0) 58%);
+ background-size:300% 100%;background-repeat:no-repeat;background-position:100% 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:sheen 11s ease-in-out infinite}
+@keyframes sheen{0%,62%{background-position:100% 0}92%,100%{background-position:0% 0}}
+@media (prefers-reduced-motion:reduce){.wordmark::after{animation:none}}
+.product{display:block;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:6px;line-height:1}
+nav.links{display:flex;gap:2px;margin-left:auto}
+nav.links a{color:var(--muted);text-decoration:none;font-size:14px;letter-spacing:.02em;padding:7px 12px;border-radius:999px;white-space:nowrap}
+nav.links a:hover{color:var(--ink);background:var(--chip)}
+.theme{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:999px;background:transparent;color:var(--ink2);cursor:pointer;padding:0}
+.theme:hover{border-color:var(--ink2)}
+.theme svg{width:15px;height:15px}
+
+/* type: light headings in the brand voice (wordmark 300, numerals 300) */
+.kicker{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+h1{font-weight:400;font-size:clamp(36px,4.4vw,56px);line-height:1.08;letter-spacing:-.015em;margin:0 0 22px;text-wrap:balance}
+h2{font-weight:400;font-size:clamp(27px,3.4vw,38px);line-height:1.15;letter-spacing:-.01em;margin:0 0 14px;text-wrap:balance}
+h3{font-weight:500;font-size:17px;line-height:1.35;letter-spacing:-.005em;margin:0 0 8px}
+.lead{font-size:18px;line-height:1.6;color:var(--ink2);max-width:66ch;margin:0}
+.muted{color:var(--muted)}
+p{margin:0 0 12px}
+
+/* sections */
+section{padding:96px 0 0;scroll-margin-top:64px}
+.head{margin-bottom:36px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;min-width:0}
+.card p{color:var(--ink2);font-size:15px;line-height:1.55;margin:0}
+.card p+p{margin-top:10px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+/* hero */
+.hero{padding-top:88px}
+.hero .lead{font-size:clamp(17px,1.6vw,20px);max-width:58ch}
+.ctas{display:flex;flex-wrap:wrap;gap:10px;margin:32px 0 18px}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:999px;font-size:15px;font-weight:500;letter-spacing:.02em;text-decoration:none;white-space:nowrap}
+.btn.primary{background:var(--btn);color:var(--btn-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.line{color:var(--ink);border:1px solid var(--line2)}
+.btn.line:hover{border-color:var(--ink2)}
+.btn svg{width:16px;height:16px;flex:none}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+.hero-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px;align-items:center}
+.hero-art .frame{border-radius:16px;box-shadow:0 1px 0 var(--line),0 18px 50px -24px rgba(0,0,0,.35)}
+
+/* images: the frame keeps its shape even if a file is missing; a click opens the full-size file */
+figure{margin:0;min-width:0}
+.frame{position:relative;aspect-ratio:var(--ar,16/10);background:var(--panel2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.frame>a{position:absolute;inset:0;display:block;cursor:zoom-in}
+.frame>a:focus-visible{outline:2px solid var(--ink2);outline-offset:-3px;border-radius:inherit}
+.frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--pos,center);display:block}
+.frame.ink{background:#000;border-color:var(--line2)}
+.frame.fit img{object-fit:contain}
+.frame.missing img{display:none}
+.frame.missing>a{pointer-events:none}
+.frame.missing::after{content:attr(data-alt);position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:var(--muted);font-size:13px}
+figcaption{font-size:13.5px;line-height:1.5;color:var(--muted);margin:10px 2px 0}
+figcaption b{color:var(--ink2);font-weight:500}
+
+/* stats: "In the lab so far" */
+.labband{margin-top:64px}
+.labhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin:0 2px 12px}
+.labhead .cardtitle{margin:0}
+.labhead .note{font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.stat{padding:18px 22px;border-left:1px solid var(--line);min-width:0}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-weight:300;font-size:34px;line-height:1.1;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.stat span{display:block;margin-top:6px;font-size:13px;line-height:1.45;color:var(--muted)}
+
+/* steps */
+.step .n{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted);letter-spacing:.06em;display:block;margin-bottom:18px}
+.tabs{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 8px}
+.tabs .cardtitle{flex-basis:100%;margin:0 0 6px}
+.chip{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12.5px;background:var(--chip);color:var(--ink2);border:1px solid var(--line2);white-space:nowrap;letter-spacing:.02em}
+.local{margin-top:14px;display:flex;gap:14px;align-items:flex-start}
+.local svg{width:18px;height:18px;flex:none;margin-top:2px;color:var(--ink2)}
+.fleet{margin-top:14px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px 28px;align-items:start}
+.fleet .small{font-size:13.5px;color:var(--muted)}
+.fleet .small b{color:var(--ink2);font-weight:500}
+
+/* proof */
+.why{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.why .card b{display:block;font-weight:300;font-size:26px;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em}
+.does{list-style:none;margin:0;padding:0}
+.does li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:11px 0;border-top:1px solid var(--line);font-size:15px;line-height:1.55;color:var(--ink2)}
+.does li:first-child{border-top:0;padding-top:2px}
+.does li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ink2);margin:9px 0 0 4px}
+.does b{color:var(--ink);font-weight:500}
+.say{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap}
+dl.rig{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:0 18px}
+dl.rig dt,dl.rig dd{padding:10px 0;border-top:1px solid var(--line);margin:0;font-size:14.5px;line-height:1.5}
+dl.rig dt{color:var(--muted)}
+dl.rig dd{color:var(--ink2)}
+dl.rig dt:first-of-type,dl.rig dt:first-of-type+dd{border-top:0;padding-top:2px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+td{padding:10px 0;border-top:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+tr:first-child td{border-top:0;padding-top:2px}
+td.v{text-align:right;white-space:nowrap;padding-left:16px;color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px}
+.cardtitle,.card p.cardtitle{font-size:11.5px;line-height:1.4;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 18px;font-weight:500}
+
+/* failures */
+.fails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fail{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0}
+.fail header{display:flex;gap:12px;align-items:baseline;margin-bottom:14px}
+.fail .n{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted);flex:none}
+.fail h3{margin:0}
+.row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.55;color:var(--ink2)}
+.row .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.row .k.bad{color:var(--bad)}
+.row .k.ok{color:var(--ok)}
+.fail.wide{grid-column:1/-1}
+
+/* demo + run */
+.rehearse{margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 28px;align-items:start}
+.rehearse .nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin-top:16px}
+.rehearse .nums p{margin:0}
+.rehearse .nums b{display:block;font-weight:300;font-size:30px;line-height:1.15;color:var(--ink);letter-spacing:-.01em}
+.rehearse .nums span{display:block;margin-top:4px;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.rehearse .said{line-height:2.1}
+.rehearse .said .say{white-space:nowrap}
+.fleet figure{grid-column:1/-1}
+.gallery-note{margin:12px 2px 0}
+pre{margin:0;white-space:pre;overflow-x:auto;font-size:13px;line-height:1.7;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;color:var(--ink2)}
+pre .c{color:var(--muted)}
+ol.steps{margin:0;padding-left:20px;color:var(--ink2);font-size:15px}
+ol.steps li{margin:0 0 10px;padding-left:4px}
+.run{margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+
+/* safety + reuse */
+.icon{width:20px;height:20px;color:var(--ink2);display:block;margin-bottom:16px}
+.limits{margin-top:14px}
+.limits ul{margin:0;padding-left:18px;color:var(--ink2);font-size:15px}
+.limits li{margin:0 0 8px}
+
+/* footer */
+footer.foot{margin-top:112px;border-top:1px solid var(--line);padding:36px 0 48px}
+footer.foot .wrap{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-start;justify-content:space-between}
+footer.foot nav{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px}
+footer.foot nav a{color:var(--ink2);text-decoration:none}
+footer.foot nav a:hover{color:var(--ink);text-decoration:underline}
+footer.foot .fine{font-size:13px;color:var(--muted);margin:14px 0 0;max-width:52ch}
+
+@media (max-width:980px){
+ .g5{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .why{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .stat:nth-child(3){border-left:0}
+ .stat:nth-child(n+3){border-top:1px solid var(--line)}
+ .run,.fleet,.rehearse{grid-template-columns:minmax(0,1fr)}
+ .labband{margin-top:40px}
+}
+@media (max-width:820px){
+ header.top .wrap{flex-wrap:wrap;gap:0 12px;padding-top:10px}
+ .theme{margin-left:auto}
+ nav.links{order:3;width:calc(100% + 16px);margin:6px -8px 0;overflow-x:auto;scrollbar-width:none;padding-bottom:8px}
+ nav.links::-webkit-scrollbar{display:none}
+ nav.links a{padding:6px 8px;font-size:13.5px}
+ .g3,.g2,.fails{grid-template-columns:minmax(0,1fr)}
+ .g5{grid-template-columns:repeat(2,minmax(0,1fr))}
+ section{padding-top:72px;scroll-margin-top:100px}
+ .hero{padding-top:56px}
+ .hero-grid{grid-template-columns:minmax(0,1fr);gap:40px}
+}
+@media (max-width:560px){
+ .wrap{padding-left:16px;padding-right:16px}
+ .kicker{letter-spacing:.16em}
+ .g5,.why{grid-template-columns:minmax(0,1fr)}
+ .step .n{margin-bottom:10px}
+ .stat{padding:16px}
+ .stat b{font-size:28px}
+ .card,.fail{padding:18px}
+ .lead{font-size:17px}
+ .row{grid-template-columns:minmax(0,1fr);gap:2px}
+ .row .k{padding-top:0}
+ dl.rig{grid-template-columns:minmax(0,1fr)}
+ dl.rig dd{border-top:0;padding-top:0}
+ dl.rig dt:first-of-type+dd{padding-top:0}
+ .btn{flex:1 1 auto;justify-content:center}
+ pre{font-size:12px;padding:14px}
+ .rehearse .said .say{font-size:12px}
+ footer.foot{margin-top:80px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="wrap">
+  <a class="brand" href="#top" aria-label="Amperes Failure Lab, back to top">
+   <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#000" style="stroke:var(--logo-stroke)"/><path d="M17 47 32 15l15 32M23.5 36h17" fill="none" stroke="#d8d9dc" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+   <span><span class="wordmark" data-text="Amperes">Amperes</span><span class="product">Failure Lab</span></span>
+  </a>
+  <nav class="links" aria-label="Sections">
+   <a href="#how">How it works</a>
+   <a href="#proof">Proof</a>
+   <a href="#failures">Failures fixed</a>
+   <a href="#demo">Demo</a>
+   <a href="https://github.com/vnmoorthy/amperes-haunted-chess">GitHub</a>
+  </nav>
+  <button class="theme" id="themeBtn" type="button" aria-label="Switch colour theme"></button>
+ </div>
+</header>
+
+<main id="top">
+
+<!-- Hero -->
+<div class="wrap hero">
+ <div class="hero-grid">
+  <div class="hero-copy">
+  <p class="kicker">Failure analysis for robot manipulation</p>
+  <h1>Every robot failure, caught, explained and fixed.</h1>
+  <p class="lead">Amperes Failure Lab records every attempt your robot makes, labels each failure, traces it to a root cause and verifies the fix by replay, with the data kept on your own machine.</p>
+  <div class="ctas">
+   <a class="btn primary" href="https://github.com/vnmoorthy/amperes-haunted-chess"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+   <a class="btn line" href="assets/Amperes_Failure_Lab.pdf"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><path d="M9.5 1.5V5H13M5.5 8.5h5M5.5 11h5"/></svg>Pitch deck (PDF)</a>
+  </div>
+  <p class="note">Proved on real hardware: a UFactory xArm6 that plays chess, where every move is a trial the lab can triage.</p>
+  </div>
+  <figure class="hero-art">
+   <div class="frame fit" style="--ar:3/2"><a href="assets/screenshots/chess-console-crop.png" target="_blank" rel="noopener"><img src="assets/screenshots/chess-console-crop.png" alt="The chess console during a game on the real xArm6" data-fallback="assets/table_camera.jpg" data-fallback-alt="The tripod camera's view of the xArm6 behind a game in progress on the real board" data-fallback-cap="&lt;b&gt;Tripod camera.&lt;/b&gt; The xArm6 behind a game in progress on the real board." onload="fitFrame(this)" onerror="imgFail(this)"></a></div>
+   <figcaption><b>Chess console</b> during a game on the real xArm6.</figcaption>
+  </figure>
+ </div>
+ <div class="labband">
+  <div class="labhead"><p class="cardtitle">In the lab so far</p><p class="note">Real xArm6 chess trials since the first chess game on 29 Oct, counted from the lab's own store at 2:39 PM on 30 Oct.</p></div>
+  <div class="stats" role="list">
+   <div class="stat" role="listitem"><b>193</b><span>chess trials recorded in 36 sessions over two days; 142 succeeded</span></div>
+   <div class="stat" role="listitem"><b>38</b><span>failures labelled: 30 missed grasps, 7 slips, 1 piece not moved</span></div>
+   <div class="stat" role="listitem"><b>13</b><span>invalid trials kept out of training data: 8 safety stops, 5 infrastructure errors</span></div>
+   <div class="stat" role="listitem"><b>2</b><span>flagged critical by rule O002: the recorded outcome contradicted independent verification</span></div>
+  </div>
+ </div>
 </div>
-<h2>Seen by the robot</h2>
-<div class="two"><img src="assets/table_camera.jpg" alt="Table camera view of the arm and board"><img src="assets/robot_view.jpg" alt="The robot's labelled overhead view"></div>
-<h2>Measured on the event arm</h2>
-<div class="stats">
-<div class="stat"><b>10/10</b><span>robot moves camera-confirmed in game 1</span></div>
-<div class="stat"><b>14/14</b><span>pick-and-places in a row after calibration</span></div>
-<div class="stat"><b>4.5 mm</b><span>survey position error, down from 15 mm</span></div>
-<div class="stat"><b>600/600</b><span>simulated board resets, zero gripper contact</span></div>
-<div class="stat"><b>0.34 mm</b><span>max error over 186 commanded poses</span></div>
-<div class="stat"><b>130</b><span>automated tests passing</span></div>
-</div>
-<h2>Try it</h2>
-<ol><li><code>git clone https://github.com/vnmoorthy/amperes-haunted-chess</code></li><li>Add your Viam machine keys to <code>.env</code> (see <code>.env.example</code>).</li><li><code>python -m amperes.cli serve --port 8765</code> and open <code>/chess</code>: pick <i>Robot plays white</i>, tick <i>Execute</i>, play.</li></ol>
-<footer>Amperes · Haunted Chess · <a href="https://github.com/vnmoorthy/amperes-haunted-chess">github.com/vnmoorthy/amperes-haunted-chess</a></footer>
-</div></body></html>
+
+<!-- What the lab does -->
+<section id="how">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">How it works</p>
+   <h2>What the lab does</h2>
+   <p class="lead">Point it at a robot cell. Every attempt becomes an episode with its evidence, and every failure gets a name, a cause and a fix you can check.</p>
+  </div>
+  <div class="grid g5">
+   <div class="card step"><span class="n">01</span><h3>Record</h3><p>Every attempt: camera images, depth, poses, the gripper reading and the outcome.</p></div>
+   <div class="card step"><span class="n">02</span><h3>Label</h3><p>Each failure gets a name: missed grasp, slip, collision stop, unsafe motion refused.</p></div>
+   <div class="card step"><span class="n">03</span><h3>Triage</h3><p>Recurring failures are grouped into incidents and traced to a root cause.</p></div>
+   <div class="card step"><span class="n">04</span><h3>Verify</h3><p>Replay and regression cases show whether a fix helped and what it broke.</p></div>
+   <div class="card step"><span class="n">05</span><h3>Export</h3><p>Clean, labelled datasets in LeRobot format, plus incident and readiness reports in Markdown and JSON.</p></div>
+  </div>
+  <div class="card tabs" style="margin-top:14px">
+   <p class="cardtitle">One console, eleven views</p>
+   <span class="chip">Robot lab</span><span class="chip">Live robot</span><span class="chip">Label</span><span class="chip">Overview</span><span class="chip">Episodes</span><span class="chip">Quality</span><span class="chip">Incidents</span><span class="chip">Operations</span><span class="chip">Replay &amp; regression</span><span class="chip">Evaluation</span><span class="chip">Export</span>
+  </div>
+  <div class="card local">
+   <svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="13" height="9" rx="2"/><path d="M6.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+   <p><b style="font-weight:500;color:var(--ink)">Local-first.</b> Episodes, findings and incidents live in a SQLite store under <code>amperes_data/</code> on your own machine. Only two things send data out: opt&#8209;in MongoDB Atlas sync, and Claude piece recognition in the chess robot, which sends camera photos to Anthropic's API and runs only when an <code>ANTHROPIC_API_KEY</code> is set.</p>
+  </div>
+  <div class="card fleet">
+   <div>
+    <p class="cardtitle">Fleet memory on MongoDB Atlas</p>
+    <h3>Find the same failure in other sessions</h3>
+    <p>Opt&#8209;in, with <code>MONGODB_URI</code> set. Sync sends episode index rows, quality findings, incidents, events and one failure-signature vector per episode. No raw streams leave the machine. Similar failures are then found with Atlas Vector Search.</p>
+    <p>All 39 robot sessions are synced. A missed grasp from a chess game on 30 Oct (<code>ep_3a3941af689d14f7</code>) matched 6 missed grasps with identical recorded evidence in other sessions, one of them from the evening before.</p>
+   </div>
+   <div>
+<pre><span class="c"># opt-in: needs MONGODB_URI</span>
+python -m amperes.cli atlas sync &lt;dataset_id&gt;
+python -m amperes.cli atlas similar &lt;episode_id&gt; -k 6</pre>
+    <p class="small" style="margin-top:14px">A signature is a deterministic vector built from recorded evidence: the quality rules that fired, the quality status, the event classes and the failure category. There is no learned embedding. In the console, the same actions are the <b>Sync to MongoDB Atlas</b> and <b>…across all stations (Atlas Vector Search)</b> buttons, shown only when Atlas is configured.</p>
+   </div>
+   <figure>
+    <div class="frame ink fit" style="--ar:2112/1016"><a href="assets/screenshots/failure-lab-similar-crop.png" target="_blank" rel="noopener"><img src="assets/screenshots/failure-lab-similar-crop.png" width="2112" height="1016" loading="lazy" alt="Episode detail in the Failure Lab console after an Atlas Vector Search on a missed grasp: eight matches, each a GRASP_FAILURE on sfhack1-main with similarity 1.000" onerror="imgFail(this)"></a></div>
+    <figcaption><b>Atlas Vector Search from the console</b>, on a missed grasp. The console asks for 8 matches; each is another missed grasp (GRASP_FAILURE) on sfhack1-main with identical recorded evidence (similarity 1.000).</figcaption>
+   </figure>
+  </div>
+ </div>
+</section>
+
+<!-- Proof -->
+<section id="proof">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">Proof</p>
+   <h2>The proof: a robot that plays chess</h2>
+   <p class="lead">Chess is a hard, honest test for a pick-and-place robot. If the lab can debug that in two days, it can debug your pick-and-place cell.</p>
+  </div>
+  <div class="why">
+   <div class="card"><b>32 pieces</b><p>Small objects in six different shapes, crowded together.</p></div>
+   <div class="card"><b>Millimetres</b><p>Every piece has to land in the middle of its square.</p></div>
+   <div class="card"><b>Hands nearby</b><p>A person reaches into the workspace, right next to the arm.</p></div>
+   <div class="card"><b>Checkable</b><p>The rules of chess and the wrist camera check every move; the tripod camera records it.</p></div>
+  </div>
+  <div class="grid g2">
+   <figure>
+    <div class="frame" style="--ar:4/3"><img src="assets/table_camera.jpg" width="640" height="480" loading="lazy" alt="The tripod camera's view of the xArm6 behind a game in progress on the real board" onerror="imgFail(this)"></div>
+    <figcaption><b>Tripod camera.</b> The xArm6 behind a game in progress on the real board.</figcaption>
+   </figure>
+   <figure>
+    <div class="frame" style="--ar:4/3"><img src="assets/robot_view.jpg" width="640" height="480" loading="lazy" alt="The wrist camera's overhead view of the board, with every square located and labelled" onerror="imgFail(this)"></div>
+    <figcaption><b>Wrist camera.</b> The robot's own view from above, every square located and labelled.</figcaption>
+   </figure>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+   <div class="card">
+    <p class="cardtitle">What the chess robot does</p>
+    <ul class="does">
+     <li><span><b>Sets up the board</b> from a messy table: it identifies the upright pieces and puts each one on its start square.</span></li>
+     <li><span><b>Plays a person.</b> The wrist camera sees your move, or you type it, and the arm answers.</span></li>
+     <li><span><b>Plays both sides by itself</b>: robot against robot, with the arm making every move.</span></li>
+     <li><span><b>Calls every move out loud</b> in plain words, with squares in capitals: <span class="say">White knight to F3, check.</span></span></li>
+     <li><span><b>Never records a move that did not happen.</b> The gripper reading and the camera must both confirm it; a missed grip is retried at once.</span></li>
+     <li><span><b>Stops for hands</b> under the gripper and waits until they are gone; after 20 s it stops the session.</span></li>
+     <li><span><b>Resets the board</b> after the game. It tracks every piece, uses slots beside the board and keeps spare queens in reserve for promotion.</span></li>
+    </ul>
+   </div>
+   <div class="grid" style="align-content:start">
+    <div class="card">
+     <p class="cardtitle">The rig</p>
+     <dl class="rig">
+      <dt>Arm</dt><dd>UFactory xArm6 with a G2 gripper, on the Viam machine sfhack1</dd>
+      <dt>Cameras</dt><dd>Intel RealSense on the wrist, a second RealSense on a tripod</dd>
+      <dt>Motion</dt><dd>Viam motion service with the table and obstacles modelled</dd>
+      <dt>Moves</dt><dd>Stockfish picks the robot's move</dd>
+      <dt>Pieces</dt><dd>Claude vision names each piece, cross-checked against its depth-measured height</dd>
+     </dl>
+    </div>
+    <div class="card">
+     <p class="cardtitle">Measured</p>
+     <table>
+      <tr><td>Robot moves confirmed by the camera, game 1 (29 Oct)</td><td class="v">10 of 10</td></tr>
+      <tr><td>Pick-and-places in a row after the camera fix (30 Oct)</td><td class="v">14 of 14</td></tr>
+      <tr><td>Simulated board resets of all 34 pieces, zero gripper contact</td><td class="v">600 of 600</td></tr>
+      <tr><td>Workspace scan, max error over 186 commanded poses</td><td class="v">0.34 mm</td></tr>
+     </table>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- Failures -->
+<section id="failures">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">Failures fixed</p>
+   <h2>Seven failures, traced and fixed</h2>
+   <p class="lead">Every chess move is recorded as a trial. These are the failures found while building and running the chess robot over two days, what caused them and what changed.</p>
+  </div>
+  <div class="fails">
+   <article class="fail">
+    <header><span class="n">01</span><h3>Grasping air beside pieces</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>The survey camera placed pieces about 15 mm off, measured on pieces the arm had put down itself.</span></div>
+    <div class="row"><span class="k">Fix</span><span>A fitted correction for the camera's position bias.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>4.5 mm mean error, then 14 of 14 pick-and-places in a row.</span></div>
+   </article>
+   <article class="fail">
+    <header><span class="n">02</span><h3>Retried grips pressed pieces into the board</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>The place height ignored where the piece had actually been gripped, so a retried grip pushed it into the board, with a risk of breaking it.</span></div>
+    <div class="row"><span class="k">Fix</span><span>Place height follows the real grip height. The last 60 mm above the board run at 10 deg/s; transit runs at 75 deg/s.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>A re-gripped piece is set down at its own height, slowly.</span></div>
+   </article>
+   <article class="fail">
+    <header><span class="n">03</span><h3>Moves recorded that never happened</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>The gripper closed on air and the move was still logged as played.</span></div>
+    <div class="row"><span class="k">Fix</span><span>A gripper-position check flags an empty grip and the arm retries at small offsets right away. The camera must see the board change before a move is committed.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>Only moves that physically happened reach the game record.</span></div>
+   </article>
+   <article class="fail">
+    <header><span class="n">04</span><h3>Collision stops on long, fast swings</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>Big wrist turns at speed tripped the arm's overcurrent collision detection.</span></div>
+    <div class="row"><span class="k">Fix</span><span>Big wrist turns are split into two half-turns, and transit is routed through the motion service in shorter moves.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>The motion changed; the arm's collision detection stays at its configured sensitivity.</span></div>
+   </article>
+   <article class="fail">
+    <header><span class="n">05</span><h3>Board reset going in circles</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>The reset planner moved the same piece back and forth.</span></div>
+    <div class="row"><span class="k">Fix</span><span>A loop guard: remembered board states, forced follow-up moves and an operation limit.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>A reset can no longer repeat itself; it makes progress or stops at the limit.</span></div>
+   </article>
+   <article class="fail">
+    <header><span class="n">06</span><h3>A typed move was ignored</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>The console kept waiting for the camera after a move had been typed in.</span></div>
+    <div class="row"><span class="k">Fix</span><span>Typing a move ends the camera watch, and the Play button stays enabled while the camera watches.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>A typed move and a seen move both work, whichever comes first.</span></div>
+   </article>
+   <article class="fail wide">
+    <header><span class="n">07</span><h3>Pieces mislabelled: a rook read as a pawn, a bishop misread</h3></header>
+    <div class="row"><span class="k bad">Cause</span><span>From straight above, piece shapes are hard to tell apart.</span></div>
+    <div class="row"><span class="k">Fix</span><span>Claude vision plus a depth-measured height check and a confidence gate. An operator's correction stays attached to the piece as it moves.</span></div>
+    <div class="row"><span class="k ok">Result</span><span>An unsure piece is left alone and looked at again; an operator's correction is made once and follows the piece.</span></div>
+   </article>
+  </div>
+ </div>
+</section>
+
+<!-- Demo -->
+<section id="demo">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">Demo</p>
+   <h2>See it run</h2>
+   <p class="lead">Both consoles run locally at <code>localhost:8765</code>. Play a game in the chess console; when it ends, <b style="font-weight:500;color:var(--ink)">End game + import</b> brings every move into the Failure Lab as a trial, next to everything else the arm did.</p>
+  </div>
+  <div class="grid g2">
+   <figure>
+    <div class="frame ink fit" style="--ar:3/2"><a href="assets/screenshots/chess-console.png" target="_blank" rel="noopener"><img src="assets/screenshots/chess-console.png" width="2400" height="1600" loading="lazy" alt="Chess console with the live board, game settings and the robot's last move" onerror="imgFail(this)"></a></div>
+    <figcaption><b>Chess console.</b> The live board, the game settings (who the robot plays, call out every move) and the robot's last move with its camera views.</figcaption>
+   </figure>
+   <figure>
+    <div class="frame ink fit" style="--ar:3/2"><a href="assets/screenshots/failure-lab-episodes.png" target="_blank" rel="noopener"><img src="assets/screenshots/failure-lab-episodes.png" loading="lazy" alt="Episodes tab of the Failure Lab console, listing recorded trials" data-fallback="assets/screenshots/failure-lab-overview.png" data-fallback-alt="Overview tab of the Failure Lab console, with episode counts and failure categories" data-fallback-cap="&lt;b&gt;Overview.&lt;/b&gt; Episode counts, recurring failure categories and data quality by collection day." onerror="imgFail(this)"></a></div>
+    <figcaption><b>Episodes.</b> Every recorded attempt with its outcome, failure category and quality status.</figcaption>
+   </figure>
+   <figure>
+    <div class="frame ink fit" style="--ar:3/2"><a href="assets/screenshots/failure-lab-incidents-crop.png" target="_blank" rel="noopener"><img src="assets/screenshots/failure-lab-incidents-crop.png" loading="lazy" alt="Incidents tab of the Failure Lab console, listing recurring failures and one incident in detail" data-fallback="assets/screenshots/failure-lab-incidents.png" onerror="imgFail(this)"></a></div>
+    <figcaption><b>Incidents.</b> Failures grouped into incidents. This one is rule O002, a recorded outcome that contradicts independent verification, with observed facts, possible causes and next steps.</figcaption>
+   </figure>
+   <figure>
+    <div class="frame ink fit" style="--ar:3/2"><a href="assets/screenshots/failure-lab-label.png" target="_blank" rel="noopener"><img src="assets/screenshots/failure-lab-label.png" width="2400" height="1600" loading="lazy" alt="Label tab of the Failure Lab console, with a real chess move queued for review, the verifier's call and both camera views" onerror="imgFail(this)"></a></div>
+    <figcaption><b>Label.</b> A real chess move queued for review, with the verifier's call and both camera views.</figcaption>
+   </figure>
+  </div>
+  <p class="note gallery-note">Each screenshot opens at full size.</p>
+  <div class="card rehearse">
+   <div>
+    <p class="cardtitle">Rehearsal, 30 Oct, 2:33 PM</p>
+    <p>Robot against robot on the real arm, from a mid-game position.</p>
+    <div class="nums">
+     <p><b>6 of 6</b><span>half-moves confirmed by the wrist camera and called out loud</span></p>
+     <p><b>9 of 9</b><span>pick-and-places succeeded, 0 failures</span></p>
+    </div>
+   </div>
+   <p class="said">Calls included <span class="say">Black knight takes D4.</span> <span class="say">White knight takes D4.</span> <span class="say">Black pawn takes D4.</span> <span class="say">White queen to B4.</span> <span class="say">Black queen to F6.</span> and, at the end, <span class="say">Game over: stopped after 6 half-moves.</span></p>
+  </div>
+  <div class="run">
+   <div class="card" style="min-width:0">
+    <p class="cardtitle">Run it</p>
+<pre><span class="c"># Python 3.12</span>
+git clone \
+  https://github.com/vnmoorthy/amperes-haunted-chess \
+  failure-lab
+cd failure-lab
+python3.12 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env   <span class="c"># your Viam machine keys</span>
+.venv/bin/python -m amperes.cli serve --port 8765</pre>
+   </div>
+   <div class="card">
+    <p class="cardtitle">Then</p>
+    <ol class="steps">
+     <li>Open <code>http://localhost:8765/</code> for the Failure Lab and <code>/chess</code> for the chess robot.</li>
+     <li>To bring a game into the lab, press <b style="font-weight:500">End game + import</b> only when the phase reads <span class="say">your move</span> or <span class="say">game over</span>. Ending a game while the arm is moving stops it mid-move.</li>
+     <li>No robot? <code>python -m amperes.integrations.chess_sim</code> replays the reset planner offline, and <code>.venv/bin/python -m pytest -q</code> runs the 132 tests.</li>
+     <li>Giving the talk? Follow the <a href="https://github.com/vnmoorthy/amperes-haunted-chess/blob/main/docs/STORYBOARD.md">3-minute storyboard</a>.</li>
+    </ol>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- Safety -->
+<section id="safety">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">Safety</p>
+   <h2>Built to work next to people</h2>
+   <p class="lead">A person plays from the other side of the board, so the guard rails are in code, not in a checklist.</p>
+  </div>
+  <div class="grid g3">
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10V4.5a1.25 1.25 0 0 1 2.5 0V9M8.5 9V3.25a1.25 1.25 0 0 1 2.5 0V9M11 9V4a1.25 1.25 0 0 1 2.5 0v6.5M13.5 8.5a1.25 1.25 0 0 1 2.5 0v3.5a6 6 0 0 1-6 6h-.5a5.5 5.5 0 0 1-4.6-2.5L3 12.4a1.25 1.25 0 0 1 2-1.4l1 1.2"/></svg><h3>Hand guard</h3><p>Before every descent the wrist depth camera looks under the gripper. Anything more than 110 mm above the board makes the arm hold still; if it is still there after 20 s, the session stops.</p></div>
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke-dasharray="2.5 2"/><circle cx="10" cy="10" r="2.2"/></svg><h3>Safety envelope</h3><p>Every target is checked against a box around the board with clearance margins, and no move may turn the gripper more than 100 degrees.</p></div>
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 16.5h12"/></svg><h3>Slow near the pieces</h3><p>Transit runs at 75 deg/s; the last 60 mm above the board run at 10 deg/s.</p></div>
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 10h3l2-4.5 3 9 2-4.5h5"/></svg><h3>Telemetry watchdog</h3><p>A separate connection watches the arm while it moves. If telemetry stops, the arm stops.</p></div>
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M7 10.2 9 12.2l4-4.4"/></svg><h3>Operator acknowledgement</h3><p>Dry run by default. The arm moves only after the operator confirms the e-stop is in reach, and STOP works mid-move.</p></div>
+   <div class="card"><svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5 16.5 5v4.5c0 4-2.8 6.9-6.5 8-3.7-1.1-6.5-4-6.5-8V5z"/></svg><h3>Recorded, not hidden</h3><p>Refused motions and safety stops are recorded in the lab with the evidence attached. Safety stops are marked invalid and kept out of training data.</p></div>
+  </div>
+ </div>
+</section>
+
+<!-- Reuse -->
+<section id="reuse">
+ <div class="wrap">
+  <div class="head">
+   <p class="kicker">Built to reuse</p>
+   <h2>Bring your own robot</h2>
+   <p class="lead">Chess was the test. Nothing in the lab is specific to it.</p>
+  </div>
+  <div class="grid g3">
+   <div class="card"><h3>Any Viam arm, gripper and camera</h3><p>Components are chosen by name: <code>AMPERES_ARM</code>, <code>AMPERES_GRIPPER</code>, <code>AMPERES_MOTION</code>, <code>AMPERES_CAMERAS</code>.</p></div>
+   <div class="card"><h3>Any recorded session</h3><p>The lab ingests recorded Viam sessions through a read-only recorder, along with JSONL, CSV and LeRobot datasets.</p></div>
+   <div class="card"><h3>Clean datasets out</h3><p>LeRobot export, incident and readiness reports in Markdown and JSON, and opt&#8209;in MongoDB Atlas sync.</p></div>
+   <div class="card"><h3>Pick-and-place modules</h3><p>Multi-view survey with a fitted camera correction, a clearance-aware reset planner and a supervised Viam session you can lift as they are.</p></div>
+   <div class="card"><h3>Tested</h3><p>132 automated tests, and an offline simulator that replays reset plans and counts gripper contacts.</p></div>
+   <div class="card"><h3>Runs on your machine</h3><p>The lab's API, console and SQLite store run locally, next to the robot. Data leaves only through opt&#8209;in Atlas sync and Claude piece recognition.</p></div>
+  </div>
+  <div class="card limits">
+   <p class="cardtitle">Honest limitations</p>
+   <ul>
+    <li>It cannot stand a fallen piece back up; a top-down parallel gripper can't.</li>
+    <li>Telling pieces apart from straight above needs the height check and, now and then, an operator's correction.</li>
+    <li>Speed is capped by the arm's own collision detection.</li>
+    <li>Arm errors are cleared by hand; nothing in the lab clears them automatically.</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer class="foot">
+ <div class="wrap">
+  <div>
+   <a class="brand" href="#top" aria-label="Back to top">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#000" style="stroke:var(--logo-stroke)"/><path d="M17 47 32 15l15 32M23.5 36h17" fill="none" stroke="#d8d9dc" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span><span class="wordmark" data-text="Amperes">Amperes</span><span class="product">Failure Lab</span></span>
+   </a>
+   <p class="fine">Local-first failure analysis for robot manipulation. Built at the Viam × MongoDB robot hackathon, 29 and 30 October 2026.</p>
+  </div>
+  <nav aria-label="Links">
+   <a href="https://github.com/vnmoorthy/amperes-haunted-chess">GitHub repository</a>
+   <a href="assets/Amperes_Failure_Lab.pdf">Pitch deck (PDF)</a>
+   <a href="https://github.com/vnmoorthy/amperes-haunted-chess/blob/main/docs/STORYBOARD.md">3-minute storyboard</a>
+  </nav>
+ </div>
+</footer>
+
+<script>
+(function(){
+ var b=document.getElementById("themeBtn"),r=document.documentElement;
+ var sun='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>';
+ var moon='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1z"/></svg>';
+ function dark(){var t=r.dataset.theme;if(t)return t==="dark";return !!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)}
+ function paint(){var d=dark();b.innerHTML=d?sun:moon;b.setAttribute("aria-label",d?"Switch to light theme":"Switch to dark theme");b.title=b.getAttribute("aria-label")}
+ b.addEventListener("click",function(){var n=dark()?"light":"dark";r.dataset.theme=n;try{localStorage.setItem("amperes-theme",n)}catch(e){}paint()});
+ try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",paint)}catch(e){}
+ paint();
+})();
+</script>
+</body>
+</html>

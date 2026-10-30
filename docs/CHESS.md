@@ -15,17 +15,18 @@ position (FEN). Code: `amperes/integrations/chess_robot.py`, HTTP: `amperes/robo
 
 ## Safety (unchanged from `ROBOT_LAB.md`)
 
-Dry run by default; motion needs *Execute* plus the operator phrase. The envelope is the board plus the graveyard area,
+Dry run by default; motion needs *Execute* plus the operator phrase. The envelope is the board plus the capture area,
 with a floor 5 mm above the board surface and a ceiling at the look pose. Every target is checked before it reaches the
-SDK; moves go through the motion service; the telemetry watchdog stops the arm after 6 s without data; STOP halts it
-mid-move. Fingers descend on the board diagonal (`theta = board angle + 45°`) so they clear neighbouring pieces.
+SDK; moves go through the motion service; the telemetry watchdog stops the arm after 10 s without data during motion
+(`WATCHDOG_S` in `viam_control.py`); STOP halts it mid-move. *End game + import* pressed while the arm is moving stops
+it the same way, so end a game only when the phase reads *your move* or *game over*. Fingers descend on the board diagonal (`theta = board angle + 45°`) so they clear neighbouring pieces.
 
 ## Calibration (3 teach points, about 3 minutes)
 
 1. Put the board flat inside the arm's reach, with an empty strip beside it for captured pieces.
 2. In the Viam app, jog the arm with the gripper **open and turned 45°** so the fingertips touch the board at the centre
    of **a1**. On `/chess` click *Teach a1* (or `python -m amperes.cli robot chess teach a1`).
-3. Same at **h1**, then at the first captured-piece spot (**graveyard**). a8 follows from a1 → h1 → a8 being
+3. Same at **h1**, then at the first captured-piece spot (*Teach capture area*; the CLI point is `graveyard`). a8 follows from a1 → h1 → a8 being
    counter-clockwise seen from above, which is true of every real board.
 4. Enter the king's height in mm (all piece heights scale from Staunton proportions) and save.
 
@@ -35,7 +36,8 @@ Grasp height is 45 % of the piece height; transport height clears the king by 25
 
 With `auto` on, the robot needs no typed input. After each of its moves it lifts the wrist camera ~56 cm over the board
 centre (the only height at which the D435 sees all 64 squares), locks the printed grid (OpenCV corner detection in the
-empty middle ranks, affine lattice, labels anchored on the pieces, best of six frames), and polls every 1.5 s: each
+empty middle ranks, affine lattice, labels anchored on the pieces, best of six frames), and polls about every 0.7 s
+(`poll_s` in `watch_human_move`): each
 square's occupancy comes from depth height above the fitted board plane, its colour from the piece pixels' brightness.
 Squares the camera misreads at rest are listed once and ignored. The human's move is the legal move that explains the
 changed squares (from- and to-square), beats every other legal move, and holds for two consecutive frames; castling
